@@ -1,0 +1,60 @@
+.tree, .main-tree{
+    margin: 0;
+    text-align: left;
+}
+
+.tree-title.active:before{
+    content: "\f07c" !important;
+    color: dodgerblue;
+}
+
+.tree-title:before{
+    content: "\f07b";
+    font-family: FontAwesome;
+    margin-left: -20px;
+    display: inline-block;
+    width: 20px;
+    color: dodgerblue;
+}
+
+.tree-title{
+    font-weight: bold;
+    list-style-type: none;
+    cursor: pointer;
+    padding-left: 0px;
+    margin-left: -10px;
+    word-wrap: break-word;
+    white-space: -moz-pre-wrap;
+    white-space: pre-wrap;
+}
+
+.tree-item:before, .main-item:before{
+    content: "\f1c9";
+    font-family: FontAwesome;
+    margin-left: -20px;
+    font-size: 12px;
+    display: inline-block;
+    width: 20px;
+}
+
+.tree-item:hover, .tree-title:hover, .main-item:hover{
+    opacity: 0.6;
+}
+
+.tree-item, .main-item{
+    word-wrap: break-word;
+    white-space: -moz-pre-wrap;
+    white-space: pre-wrap;
+    cursor: pointer;
+    list-style-type: none;
+    margin-left: 20px;
+    padding-left: 10px;
+}
+
+.tree-item {
+    display: none;
+}
+
+.selected {
+    background-color: lightskyblue;
+}

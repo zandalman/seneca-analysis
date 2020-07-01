@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/jquery-ui.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/select2.min.css') }}" rel="stylesheet">
+    {% block styles %}{% endblock %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/sijax/sijax.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/sijax/sijax_upload.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/sijax/sijax_comet.js') }}"></script>
+    {% block script1 %}{% endblock %}
+    <title>{% block title %}{% endblock %}</title>
+    <script type="text/javascript">{{ g.sijax.get_js()|safe }}</script>
+</head>
+<body onload="remove_loader()">
+    <div id="loader">
+        <div id="loader-img"></div>
+    </div>
+    <h1>Analysis</h1><hr class="main">
+    <p id="status"></p>
+    <i class="fa fa-eraser button" aria-hidden="true" id="erase"></i>
+    {% block content %}{% endblock %}
+    {% block script2 %}{% endblock %}
+    <script>
+        $("#erase").on("click", function(){
+            $("#status").html("");
+        });
+        function remove_loader() {
+            setTimeout(hide_loader, 1000);
+        }
+        function hide_loader() {
+            $('#loader').hide();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block styles %}
+    <link href="../static/css/filetree.css" rel="stylesheet" type="text/css">
+{% endblock %}
+{% block title %}analysis{% endblock %}
+{% block script1 %}
+    <script>{{ form_init_js|safe }}</script>
+{% endblock %}
+{% block content %}
+    <button id="to-plots" class="page-change button" onclick="location.href='plot';">Go to plots</button>
+    <div class="vl"></div>
+    <hr class="main">
+    <div class="row">
+        <div class="column left">
+            <h2>Routines</h2>
+        </div>
+        <div class="column right">
+            <h2>Shots</h2>
+        </div>
+    </div><hr class="main">
+    <div class="row">
+        <div class="column left">
+            <i class="material-icons button" style="color:green;" id="new_folder" title="create new folder">create_new_folder</i>
+            <form id="add-routine" name="add-routine" method="post" enctype="multipart/form-data">
+                <input type="hidden" id="path" name="path" value="" />
+                <label for="file-upload" class="custom-file-upload">
+                    <i class="material-icons button" style="color:green;" title="upload routine">note_add</i>
+                </label>
+                <input type="file" name="routine" id="file-upload" style="display:none;" onchange="form.submit()"/>
+            </form>
+            <i class="material-icons button inactive" style="color:red;" id="remove" title="remove folder or routine">remove_circle</i>
+            <i class="material-icons button inactive" style="color:dodgerblue;" id="unselect" title="unselect">highlight_off</i>
+        </div>
+        <div class="column right">
+            <i class="material-icons button" style="color:purple;" title="select data directory" id="select-data-dir">poll</i>
+        </div>
+    </div><hr>
+    <div class="row">
+        <div class="column left">
+            <div class="filetree">
+                {%- for child in routines.children %}
+                    {%- if child.children is defined -%}
+                        <ul class="main-tree">
+                            <li class="tree-title" data-path="{{ child.path }}">{{ child.name }}</li>
+                            {%- for grandchild in child.children recursive %}
+                                {%- if grandchild.children is defined -%}
+                                    <ul class="tree">
+                                        <li class="tree-title" data-path="{{ grandchild.path }}">{{ grandchild.name }}</li>
+                                        {{ loop(grandchild.children) }}
+                                    </ul>
+                                {%- else %}
+                                    <li class="tree-item" data-path="{{ grandchild.path }}">{{ grandchild.name }}</li>
+                                {%- endif %}
+                            {%- endfor %}
+                        </ul>
+                    {%- else %}
+                        <li class="main-item" data-path="{{ child.path }}">{{ child.name }}</li>
+                    {%- endif %}
+                {%- endfor %}
+            </div>
+        </div>
+        <div class="column right">
+            <p id="data-dir"><b>data directory</b>: {{ data_dir }}</p>
+            <div class="routine-info shots-info">
+                <form id="routine-shots-dir">
+                    <label for="shots-dir-options" style="margin-left: 10px;"><b>shots directory</b>:</label>
+                    <select name="shots-dir-options" id="shots-dir-options" class="selection-box button"></select>
+                </form><br/><br/>
+                <form id="routine-json">
+                    <label for="json-options" style="margin-left: 10px;"><b>read-write JSON</b>:</label>
+                    <select name="json-options" id="json-options" class="selection-box button"></select>
+                </form><br/><br/>
+                <div class="table-container">
+                    <table id="shots-table">
+                        <caption><b>shots</b></caption>
+                        <thead>
+                        <tr>
+                            <th>file type</th>
+                            <th># shots</th>
+                        </tr>
+                        </thead>
+                        <tbody id="shots-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div><hr class="main">
+    <div class="routine-info">
+        <div class="row">
+            <div class="column left">
+                <h3>Routine Options</h3>
+            </div>
+            <div class="column right">
+                <h3>Analysis Options</h3>
+            </div>
+        </div><hr class="main">
+        <div class="row">
+            <div class="column left"><br/></div>
+            <div class="column right">
+                <i class="material-icons button inactive" style="color:darkcyan;" title="revert analysis" id="revert-analysis">undo</i>
+                <i class="material-icons button inactive" style="color:darkcyan;" title="update analysis options" id="update-analysis">refresh</i>
+            </div>
+        </div><hr>
+        <div class="row">
+            <div class="column left">
+                <p id="routine-name"></p>
+                <p id="routine-description"></p>
+                <div class="table-container">
+                    <table id="function-table">
+                        <caption><b>plot functions</b></caption>
+                        <thead>
+                        <tr>
+                            <th>name</th>
+                            <th>description</th>
+                        </tr>
+                        </thead>
+                        <tbody id="function-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="column right"><br/>
+                <form id="analysis-options">
+                    <div id="select-shots-by-container">
+                        <label for="select-shots-by" class="analysis-label"><b>shot selection method</b>:</label>
+                        <select name="select-shots-by" id="select-shots-by" class="selection-box button">
+                            <option value="choice">choice</option>
+                            <option value="last-created">last created</option>
+                            <option value="last-modified">last modified</option>
+                            <option value="all">all</option>
+                        </select><br/><br/>
+                    </div>
+                    <div id="num-shots-container">
+                        <label for="num-shots" class="analysis-label" id="num-shots-label"><b># shots per analysis</b>:</label>
+                        <input type="number" name="num-shots" id="num-shots" min="1" value="1" class="num-box"/><br/><br/>
+                    </div>
+                    <div id="shots-choice-container">
+                        <label for="shots-choice[]" class="analysis-label"><b>shots</b>:</label>
+                        <select name="shots-choice[]" id="shots-choice" multiple></select><br/><br/>
+                    </div>
+                    <div id="frequency-container">
+                        <label for="frequency" class="analysis-label"><b>frequency</b> (Hz):</label>
+                        <input type="number" name="frequency" id="frequency" class="num-box" min="0" value=".2" step="any"><br/><br/>
+                    </div>
+                </form>
+            </div>
+        </div><hr class="main">
+    </div>
+{% endblock %}
+{% block script2 %}
+    <script src="{{ url_for('static', filename='js/misc.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/filetree.js') }}"></script>
+{% endblock %}

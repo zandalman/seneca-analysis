@@ -1,0 +1,59 @@
+#plots-container {
+    width: 95%;
+    height: 2000px;
+    background: beige;
+    margin: 0 auto;
+}
+.plot-container {
+    border: 2px solid black;
+    background-size: cover;
+}
+#timer {
+    margin: 0 auto;
+    width: auto;
+    font-family: 'Source Code Pro', monospace;
+    background-color: black;
+    color: limegreen;
+    background-size: auto;
+    font-size: 32px;
+    display: inline-block;
+}
+.plot-list-item, .plot-list-routine-title {
+    list-style-type: none;
+    word-wrap: break-word;
+    white-space: -moz-pre-wrap;
+    white-space: pre-wrap;
+    cursor: pointer;
+}
+.plot-list-item {
+    margin-left: 0;
+    padding-left: 10px;
+}
+.plot-list-routine-title {
+    padding-left: 0;
+    margin-left: -10px;
+}
+.plot-list-item.visible:before, .plot-list-routine-title.visible:before {
+    content: "\f06e";
+    font-family: FontAwesome;
+    margin-left: -20px;
+    font-size: 12px;
+    display: inline-block;
+    width: 20px;
+}
+.plot-list-item.invisible, .plot-list-routine-title.invisible {
+    opacity: .6;
+}
+.plot-list-item.invisible:before, .plot-list-routine-title.invisible:before {
+    content: "\f070";
+    font-family: FontAwesome;
+    margin-left: -20px;
+    font-size: 12px;
+    display: inline-block;
+    width: 20px;
+}
+#plot-list{
+    margin: 0;
+    padding: 0;
+    text-align: left;
+}

@@ -1,0 +1,104 @@
+
+// revert analysis options when routine selection changes
+$(".filetree").on("click", ".tree-item, .main-item", function () {
+    $(".routine-info").css("display", "inline");
+    if (!$(this).hasClass("selected")) {
+        $("#revert-analysis").trigger("click");
+        Sijax.request("display_routine_info", [$(this).text()]);
+    }
+    $("#shots-choice").select2({
+        maximumSelectionLength: parseInt($("#num-shots").val(), 10)
+    });
+});
+
+// reset all routine information when routine selection changes
+$(".tree, .main-tree, #unselect").on("click", function(){
+    reset_routine_info();
+});
+
+// reset routine information
+function reset_routine_info() {
+    $(".routine-info").css("display", "none");
+}
+
+// select the data directory
+$("#select-data-dir").click(function() {
+    var routine_name = $(".selected").length > 0 ? $(".selected").text(): "";
+    var data_dir = prompt("Absolute path to shots directory (type 'reset' to reset)");
+    var update_dir_options = $(".selected").hasClass("main-item") || $(".selected").hasClass("tree-item");
+    Sijax.request("select_data_dir", [data_dir, update_dir_options, routine_name]);
+});
+
+// select the shots directory
+$("#shots-dir-options").on("change", function () {
+    var routine_name = $(".selected").text();
+    var shots_dir = Sijax.getFormValues("#routine-shots-dir");
+    Sijax.request("set_shots_dir", [routine_name, shots_dir]);
+});
+
+// select the read-write json file
+$("#json-options").on("change", function () {
+    var routine_name = $(".selected").text();
+    var json_file = Sijax.getFormValues("#routine-json");
+    Sijax.request("set_json_options", [routine_name, json_file]);
+});
+
+// revert the analysis options (i.e. undo changes)
+$("#revert-analysis").on("click", function () {
+    if (!$(this).hasClass("inactive")) {
+        var routine_name = $(".selected").text();
+        Sijax.request("refresh_analysis", [routine_name]);
+        deactivate_buttons("#update-analysis, #revert-analysis");
+    }
+});
+
+// update which analysis options are available
+function check_shots_display() {
+    var select = document.getElementById("select-shots-by");
+    var selected_method = select.options[select.selectedIndex].value;
+    if (selected_method === "choice") {
+        $("#shots-choice-container").css("display", "inline");
+    } else {
+        $("#shots-choice-container").css("display", "none");
+    }
+    if (selected_method === "all") {
+        $("#num-shots-container").css("display", "none");
+    } else {
+        $("#num-shots-container").css("display", "inline");
+    }
+}
+
+// change the number of shots
+$("#num-shots").on("change", function() {
+    $("#shots-choice").val(null);
+    $("#shots-choice").select2({
+        maximumSelectionLength: parseInt($("#num-shots").val(), 10)
+    });
+});
+
+// update analysis options
+$("#update-analysis").on("click", function () {
+    if (!$(this).hasClass("inactive")) {
+        var routine_name = $(".selected").text();
+        var analysis_options = Sijax.getFormValues("#analysis-options");
+        var shots_choice = $("#shots-choice").select2("data");
+        Sijax.request("update_analysis", [routine_name, analysis_options, shots_choice]);
+        deactivate_buttons("#update-analysis, #revert-analysis");
+    }
+});
+
+// active buttons
+function activate_buttons(button_selector) {
+    $(button_selector).removeClass("inactive");
+}
+
+// deactivate buttons
+function deactivate_buttons(button_selector) {
+    $(button_selector).addClass("inactive");
+}
+
+// change available analysis options based on current analysis options
+$("#select-shots-by, #num-shots, #shots-choice, #frequency").on("change", function () {
+    activate_buttons("#update-analysis, #revert-analysis");
+    check_shots_display();
+});
