@@ -28,7 +28,7 @@
     white-space: pre-wrap;
 }
 
-.tree-item:before, .main-item:before{
+.tree-item.routine:before, .main-item.routine:before{
     content: "\f1c9";
     font-family: FontAwesome;
     margin-left: -20px;
@@ -37,7 +37,16 @@
     width: 20px;
 }
 
-.tree-item:hover, .tree-title:hover, .main-item:hover{
+.tree-item.support:before, .main-item.support:before{
+    content: "\f016";
+    font-family: FontAwesome;
+    margin-left: -20px;
+    font-size: 12px;
+    display: inline-block;
+    width: 20px;
+}
+
+.tree-item.routine:hover, .tree-title:hover, .main-item.routine:hover, .tree-item.support, .main-item.support {
     opacity: 0.6;
 }
 

@@ -89,7 +89,8 @@ $("#remove").click(function () {
     } else if ($(".selected").hasClass("tree-item") || $(".selected").hasClass("main-item")) {
         var file_name = $(".selected").text();
         if (confirm("Are you sure you want to remove " + file_name + "?")) {
-            Sijax.request("remove_routine", [file_name, path]);
+            var is_routine = $(".selected").hasClass("routine");
+            Sijax.request("remove_file", [file_name, is_routine]);
             $(".selected").remove();
             $("#status").append("'" + file_name + "' removed successfully<br/>");
             $("#remove, #unselect").addClass("inactive");
@@ -124,18 +125,18 @@ function get_selected_path() {
     return $(".selected").length > 0 ? $(".selected").data("path") : "";
 }
 
-// add a routine
-function add_routine(path, filename) {
+// add a file
+function add_file(path, filename, routine) {
     var file_element = document.createElement("LI");
     var file_text = document.createTextNode(filename);
     file_element.appendChild(file_text);
     var file_path = path;
     file_element.dataset.path = file_path;
     if (path == "") {
-        file_element.className = "main-item";
+        file_element.className = routine ? "main-item routine": "main-item support";
         document.getElementsByClassName("filetree")[0].appendChild(file_element);
     } else {
-        file_element.className = "tree-item";
+        file_element.className = routine ? "tree-item routine": "tree-item support";
         document.getElementsByClassName("selected")[0].parentElement.appendChild(file_element);
         if (!$(".selected").hasClass("active")) {
             setStatus($(".selected"));

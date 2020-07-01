@@ -57,6 +57,7 @@ def make_tree_wrapper():
         data = json.load(file)
         paths = list(map(lambda path: path.split('/'), data["paths"]))
         routines = [routine for routine in data["routines"] if routine["name"] in os.listdir(routine_path)]
+        supports = [support for support in data["support"] if support["name"] in os.listdir(routine_path)]
 
     # create a nested file/folder object from json file to pass to the main template
     def make_tree(tree_path):
@@ -71,7 +72,10 @@ def make_tree_wrapper():
             tree["children"].append(make_tree(subpath))
         subroutines = [routine for routine in routines if routine["path"] == tree_path_joined]
         for subroutine in subroutines:
-            tree["children"].append(dict(name=subroutine["name"], path=subroutine["path"]))
+            tree["children"].append(dict(name=subroutine["name"], path=subroutine["path"], routine=True))
+        subsupports = [support for support in supports if support["path"] == tree_path_joined]
+        for subsupport in subsupports:
+            tree["children"].append(dict(name=subsupport["name"], path=subsupport["path"], routine=False))
         return tree
     return make_tree([])
 
@@ -247,6 +251,68 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['py']
 
 
+# add a routine
+def add_routine(obj_response, files, form_values, data):
+    global routine_path
+    file_data = files['routine']
+    filename = file_data.filename
+    # send a warning if nothing is uploaded
+    if filename is None:
+        report_status(obj_response, "status", "Nothing uploaded")
+        return data
+    # send a warning if the file is not a python script
+    elif not allowed_file(filename):
+        report_status(obj_response, "status", "'%s' is not a python script" % filename)
+        return data
+    # send a warning if another routine exists with the same name
+    elif filename in [routine["name"] for routine in data["routines"]]:
+        report_status(obj_response, "status", "A routine by the name '%s' already exists" % filename)
+        return data
+    elif filename in [support["name"] for support in data["support"]]:
+        report_status(obj_response, "status", "A supporting file by the name '%s' already exists" % filename)
+        return data
+    path = form_values['path'][0]
+    file_path_app = os.path.join(routine_path, filename)
+    file_data.save(file_path_app)
+    routine_info = get_routine_info(filename)
+    # check for errors from get_routine_info
+    if "error" in routine_info.keys():
+        report_status(obj_response, "status", routine_info["error"])
+        os.remove(os.path.join(routine_path, filename))
+        return data
+    # set default analysis options
+    default_analysis_options = {"select-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": []}
+    routine_all_info = dict(name=filename, path=path, shots_dir="", json="", analysis=default_analysis_options)
+    routine_all_info.update(routine_info)
+    data['routines'].append(routine_all_info)
+    obj_response.call('add_file', [path, filename, True])
+    report_status(obj_response, "status", "'%s' successfully uploaded" % filename)
+    return data
+
+# add a supporting file
+def add_support(obj_response, files, form_values, data):
+    global routine_path
+    file_data = files['support']
+    filename = file_data.filename
+    # send a warning if nothing is uploaded
+    if filename is None:
+        report_status(obj_response, "status", "Nothing uploaded")
+        return data
+    # send a warning if another routine exists with the same name
+    elif filename in [routine["name"] for routine in data["routines"]]:
+        report_status(obj_response, "status", "A routine by the name '%s' already exists" % filename)
+        return data
+    elif filename in [support["name"] for support in data["support"]]:
+        report_status(obj_response, "status", "A supporting file by the name '%s' already exists" % filename)
+        return data
+    path = form_values['path'][0]
+    file_path_app = os.path.join(routine_path, filename)
+    file_data.save(file_path_app)
+    data['support'].append(dict(name=filename, path=path))
+    obj_response.call('add_file', [path, filename, False])
+    report_status(obj_response, "status", "'%s' successfully uploaded" % filename)
+    return data
+
 # Sijax handlers for the main page
 class MainHandler(object):
     # add a folder
@@ -259,9 +325,12 @@ class MainHandler(object):
     # remove a routine
     @staticmethod
     @update_JSON()
-    def remove_routine(obj_response, filename, path, data={}):
+    def remove_file(obj_response, filename, is_routine, data={}):
         global routine_path
-        data['routines'] = [routine for routine in data["routines"] if routine['name'] != str(filename)]
+        if is_routine:
+            data['routines'] = [routine for routine in data["routines"] if routine['name'] != str(filename)]
+        else:
+            data['support'] = [support for support in data["support"] if support['name'] != str(filename)]
         os.remove(os.path.join(routine_path, filename))
         return data
 
@@ -283,46 +352,20 @@ class MainHandler(object):
         data['paths'].remove(str(tree_path))
         return data
 
+
     # add a routine
     @staticmethod
     @update_JSON()
-    def _add_routine(obj_response, files, form_values, data={}):
-        global routine_path
-        # send a warning if the form data is not complete
+    def _add_file(obj_response, files, form_values, data={}):
         if 'routine' not in files:
             report_status(obj_response, "status", "Upload unsuccessful")
             return data
-        file_data = files['routine']
-        filename = file_data.filename
-        # send a warning if nothing is uploaded
-        if filename is None:
-            report_status(obj_response, "status", "Nothing uploaded")
+        if 'support' in files and files['support'].filename != '':
+            data = add_support(obj_response, files, form_values, data)
             return data
-        # send a warning if the file is not a python script
-        elif not allowed_file(filename):
-            report_status(obj_response, "status", "'%s' is not a python script" % filename)
+        else:
+            data = add_routine(obj_response, files, form_values, data)
             return data
-        # send a warning if another routine exists with the same name
-        elif filename in [routine["name"] for routine in data["routines"]]:
-            report_status(obj_response, "status", "A routine by the name '%s' already exists" % filename)
-            return data
-        path = form_values['path'][0]
-        file_path_app = os.path.join(routine_path, filename)
-        file_data.save(file_path_app)
-        routine_info = get_routine_info(filename)
-        # check for errors from get_routine_info
-        if "error" in routine_info.keys():
-            report_status(obj_response, "status", routine_info["error"])
-            os.remove(os.path.join(routine_path, filename))
-            return data
-        # set default analysis options
-        default_analysis_options = {"select-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": []}
-        routine_all_info = dict(name=filename, path=path, shots_dir="", json="", analysis=default_analysis_options)
-        routine_all_info.update(routine_info)
-        data['routines'].append(routine_all_info)
-        obj_response.call('add_routine', [path, filename])
-        report_status(obj_response, "status", "'%s' successfully uploaded" % filename)
-        return data
 
     # select a data directory
     @staticmethod
@@ -496,7 +539,7 @@ class PlotCometHandler(object):
             if sleep_time >= 0:
                 time.sleep(sleep_time)
             elif not reported_error:
-                report_status(obj_response, "status", "Warning: update period is faster than execution time by %.3g seconds for '%s'. Try setting a lower frequency." % (-sleep_time, routine["name"]))
+                report_status(obj_response, "status", "Warning: update period is faster than execution time by %.3g seconds for '%s'. Try setting a lower frequency" % (-sleep_time, routine["name"]))
                 reported_error = True
 
 # route the main page
@@ -506,7 +549,7 @@ def main():
     data_dir = get_data_dir()
     # register Sijax upload handlers
     form_init_js = ''
-    form_init_js += g.sijax.register_upload_callback('add-routine', MainHandler._add_routine)
+    form_init_js += g.sijax.register_upload_callback('add-file', MainHandler._add_file)
     if g.sijax.is_sijax_request:
         # register Sijax handlers
         g.sijax.register_object(MainHandler)

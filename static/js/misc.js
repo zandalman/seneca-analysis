@@ -1,6 +1,6 @@
 
 // revert analysis options when routine selection changes
-$(".filetree").on("click", ".tree-item, .main-item", function () {
+$(".filetree").on("click", ".tree-item.routine, .main-item.routine", function () {
     $(".routine-info").css("display", "inline");
     if (!$(this).hasClass("selected")) {
         $("#revert-analysis").trigger("click");
@@ -15,7 +15,7 @@ $(".filetree").on("click", ".tree-item, .main-item", function () {
 });
 
 // reset all routine information when routine selection changes
-$(".tree, .main-tree, #unselect").on("click", function(){
+$(".tree, .main-tree, #unselect, .tree-item.support, .main-item.support").on("click", function(){
     reset_routine_info();
 });
 
@@ -28,7 +28,7 @@ function reset_routine_info() {
 $("#select-data-dir").click(function() {
     var routine_name = $(".selected").length > 0 ? $(".selected").text(): "";
     var data_dir = prompt("Absolute path to shots directory (type 'reset' to reset)");
-    var update_dir_options = $(".selected").hasClass("main-item") || $(".selected").hasClass("tree-item");
+    var update_dir_options = $(".selected").hasClass("main-item routine") || $(".selected").hasClass("tree-item routine");
     Sijax.request("select_data_dir", [data_dir, update_dir_options, routine_name]);
 });
 
