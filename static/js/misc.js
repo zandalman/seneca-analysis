@@ -9,7 +9,9 @@ $(".filetree").on("click", ".tree-item, .main-item", function () {
     $("#shots-choice").select2({
         maximumSelectionLength: parseInt($("#num-shots").val(), 10)
     });
-    $("#filetype").select2();
+    $("#filetype").select2({
+        tags: true
+    });
 });
 
 // reset all routine information when routine selection changes
