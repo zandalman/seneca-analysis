@@ -213,6 +213,9 @@ def update_shots_choice(obj_response, routine, data_dir):
         if shot in choice:
             obj_response.attr("option[value|='%s']" % shot, "selected", "selected")
 
+def update_filetype(obj_response, routine):
+    filetypes = routine["analysis"]["filetype"]
+    obj_response.call("select_filetype", [filetypes])
 
 # update the analysis options
 def update_analysis_options(obj_response, routine, data_dir):
@@ -223,6 +226,7 @@ def update_analysis_options(obj_response, routine, data_dir):
     obj_response.attr("#num-shots", "value", num_shots)
     obj_response.attr("#frequency", "value", frequency)
     update_shots_choice(obj_response, routine, data_dir)
+    update_filetype(obj_response, routine)
     obj_response.call("check_shots_display")
 
 
@@ -312,7 +316,7 @@ class MainHandler(object):
             os.remove(os.path.join(routine_path, filename))
             return data
         # set default analysis options
-        default_analysis_options = {"select-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2"}
+        default_analysis_options = {"select-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": []}
         routine_all_info = dict(name=filename, path=path, shots_dir="", json="", analysis=default_analysis_options)
         routine_all_info.update(routine_info)
         data['routines'].append(routine_all_info)
@@ -405,9 +409,10 @@ class MainHandler(object):
     # update analysis options
     @staticmethod
     @update_JSON()
-    def update_analysis(obj_response, routine_name, analysis_options, shots_choice, data={}):
+    def update_analysis(obj_response, routine_name, analysis_options, shots_choice, filetypes, data={}):
         routine = [routine for routine in data["routines"] if routine["name"] == routine_name][0]
-        analysis_options["choice"] = [shot["text"] for shot in shots_choice]
+        analysis_options["choice"] = [shot["id"] for shot in shots_choice]
+        analysis_options["filetype"] = [filetype["id"] for filetype in filetypes]
         routine["analysis"] = analysis_options
         report_status(obj_response, "status", "Set the analysis options for '%s' to '%s'" % (routine_name, analysis_options))
         return data
@@ -491,7 +496,7 @@ class PlotCometHandler(object):
             if sleep_time >= 0:
                 time.sleep(sleep_time)
             elif not reported_error:
-                report_status(obj_response, "status", "Warning: update period is faster than executation time by %.3g seconds. Try setting a lower frequency." % -sleep_time)
+                report_status(obj_response, "status", "Warning: update period is faster than execution time by %.3g seconds for '%s'. Try setting a lower frequency." % (-sleep_time, routine["name"]))
                 reported_error = True
 
 # route the main page

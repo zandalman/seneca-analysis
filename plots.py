@@ -13,6 +13,7 @@ def get_shots_paths(analysis_options, shots_dir, data_dir):
     # get the paths to all measurement files in the directory
     all_shots = [os.path.join(data_dir, shots_dir, shot) for shot in os.listdir(os.path.join(data_dir, shots_dir)) if os.path.isfile(os.path.join(data_dir, shots_dir, shot)) and not shot.startswith(".")]
     num_shots = int(analysis_options["num-shots"])
+    filetypes = analysis_options["filetype"]
     now = time.time()
     period = 1 / get_period(analysis_options)
     if select_method == "choice":
@@ -29,6 +30,11 @@ def get_shots_paths(analysis_options, shots_dir, data_dir):
         shots = [shot for shot in all_shots if now - os.path.getctime(shot) <= period]
     elif select_method == "modified":
         shots = [shot for shot in all_shots if now - os.path.getmtime(shot) <= period]
+    if filetypes:
+        all_filetypes = []
+        for filetype in filetypes:
+            all_filetypes += filetype.split("/")
+        shots = [shot for shot in shots if shot.rsplit('.', 1)[1].lower() in all_filetypes]
     return shots
 
 

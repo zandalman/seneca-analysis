@@ -9,6 +9,7 @@ $(".filetree").on("click", ".tree-item, .main-item", function () {
     $("#shots-choice").select2({
         maximumSelectionLength: parseInt($("#num-shots").val(), 10)
     });
+    $("#filetype").select2();
 });
 
 // reset all routine information when routine selection changes
@@ -57,15 +58,17 @@ function check_shots_display() {
     var select = document.getElementById("select-shots-by");
     var selected_method = select.options[select.selectedIndex].value;
     if (selected_method === "choice") {
-        $("#shots-choice-container").css("display", "inline");
+        $("#shots-choice-container").show();
+        $("#filetype-container").hide();
     } else {
-        $("#shots-choice-container").css("display", "none");
+        $("#shots-choice-container").hide();
+        $("#filetype-container").show();
     }
     var methods_no_num_shots = ["all", "new", "modified"];
     if (methods_no_num_shots.indexOf(selected_method) >= 0) {
-        $("#num-shots-container").css("display", "none");
+        $("#num-shots-container").hide();
     } else {
-        $("#num-shots-container").css("display", "inline");
+        $("#num-shots-container").show();
     }
 }
 
@@ -83,7 +86,8 @@ $("#update-analysis").on("click", function () {
         var routine_name = $(".selected").text();
         var analysis_options = Sijax.getFormValues("#analysis-options");
         var shots_choice = $("#shots-choice").select2("data");
-        Sijax.request("update_analysis", [routine_name, analysis_options, shots_choice]);
+        var filetype = $("#filetype").select2("data");
+        Sijax.request("update_analysis", [routine_name, analysis_options, shots_choice, filetype]);
         deactivate_buttons("#update-analysis, #revert-analysis");
     }
 });
@@ -99,7 +103,13 @@ function deactivate_buttons(button_selector) {
 }
 
 // change available analysis options based on current analysis options
-$("#select-shots-by, #num-shots, #shots-choice, #frequency").on("change", function () {
+$("#select-shots-by, #num-shots, #shots-choice, #frequency, #filetype").on("change", function () {
     activate_buttons("#update-analysis, #revert-analysis");
     check_shots_display();
 });
+
+function select_filetype(filetypes) {
+    $("#filetype").val(filetypes);
+    $("#filetype").trigger("change");
+    deactivate_buttons("#update-analysis, #revert-analysis");
+}

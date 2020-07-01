@@ -131,6 +131,18 @@
                             <option value="all">all</option>
                         </select><br/><br/>
                     </div>
+                    <div id="filetype-container">
+                        <label for="filetype[]" class="analysis-label"><b>filetype filter</b>:</label>
+                        <select name="filetype[]" id="filetype" style="width: 50%;" multiple>
+                            <option value="csv">csv</option>
+                            <option value="jpeg/jpg">jpeg/jpg</option>
+                            <option value="hdf5/h5">hdf5/h5</option>
+                            <option value="json">json</option>
+                            <option value="pdf">pdf</option>
+                            <option value="png">png</option>
+                            <option value="xml">xml</option>
+                        </select><br/><br/>
+                    </div>
                     <div id="num-shots-container">
                         <label for="num-shots" class="analysis-label" id="num-shots-label"><b># shots per analysis</b>:</label>
                         <input type="number" name="num-shots" id="num-shots" min="1" value="1" class="num-box"/><br/><br/>
