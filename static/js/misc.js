@@ -61,7 +61,8 @@ function check_shots_display() {
     } else {
         $("#shots-choice-container").css("display", "none");
     }
-    if (selected_method === "all") {
+    var methods_no_num_shots = ["all", "new", "modified"];
+    if (methods_no_num_shots.indexOf(selected_method) >= 0) {
         $("#num-shots-container").css("display", "none");
     } else {
         $("#num-shots-container").css("display", "inline");

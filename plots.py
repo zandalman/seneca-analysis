@@ -3,6 +3,7 @@
 import os
 import subprocess
 import json
+import time
 
 
 # get the paths of the measurement files to analyse based on the analysis options
@@ -10,10 +11,12 @@ def get_shots_paths(analysis_options, shots_dir, data_dir):
     # get measurement selection method
     select_method = analysis_options["select-shots-by"]
     # get the paths to all measurement files in the directory
-    all_shots = [os.path.join(shots_dir, shot) for shot in os.listdir(os.path.join(data_dir, shots_dir)) if os.path.isfile(os.path.join(data_dir, shots_dir, shot)) and not shot.startswith(".")]
+    all_shots = [os.path.join(data_dir, shots_dir, shot) for shot in os.listdir(os.path.join(data_dir, shots_dir)) if os.path.isfile(os.path.join(data_dir, shots_dir, shot)) and not shot.startswith(".")]
     num_shots = int(analysis_options["num-shots"])
+    now = time.time()
+    period = 1 / get_period(analysis_options)
     if select_method == "choice":
-        shots = analysis_options["choice"]
+        shots = [os.path.join(data_dir, shots_dir, shot) for shot in analysis_options["choice"]]
     elif select_method == "all":
         shots = all_shots
     elif select_method == "last-created":
@@ -22,8 +25,11 @@ def get_shots_paths(analysis_options, shots_dir, data_dir):
     elif select_method == "last-modified":
         all_shots.sort(key=os.path.getmtime)
         shots = all_shots[-num_shots:]
-    shots_paths = [os.path.join(data_dir, shots_dir, shot) for shot in shots]
-    return shots_paths
+    elif select_method == "new":
+        shots = [shot for shot in all_shots if now - os.path.getctime(shot) <= period]
+    elif select_method == "modified":
+        shots = [shot for shot in all_shots if now - os.path.getmtime(shot) <= period]
+    return shots
 
 
 # run the routines and generate the plot urls

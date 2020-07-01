@@ -476,17 +476,23 @@ class PlotCometHandler(object):
     def analyse_routine(obj_response, data_dir, routine, period):
         global analysis_on, routine_path, JSON_path
         analysis_on = True
+        reported_error = False
         # loop analysis until paused or stopped
         while analysis_on:
+            iter_start = time.time()
             error, plots = generate_plot_urls(routine, routine_path, data_dir)
             if error:
                 report_status(obj_response, "status", plots)
-                yield obj_response
-                break
+                PlotHandler.stop_analysis(obj_response)
             for plot in plots:
                 update_plot(obj_response, plot["url"], plot["plot_id"], plot["data"], plot["table_id"], routine["name"])
                 yield obj_response
-            time.sleep(period)
+            sleep_time = period - (time.time() - iter_start)
+            if sleep_time >= 0:
+                time.sleep(sleep_time)
+            elif not reported_error:
+                report_status(obj_response, "status", "Warning: update period is faster than executation time by %.3g seconds. Try setting a lower frequency." % -sleep_time)
+                reported_error = True
 
 # route the main page
 @flask_sijax.route(app, '/')
