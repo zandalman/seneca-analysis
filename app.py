@@ -226,12 +226,17 @@ def update_analysis_options(obj_response, routine, data_dir):
     analysis_method = routine["analysis"]["select-shots-by"]
     num_shots = routine["analysis"]["num-shots"]
     frequency = routine["analysis"]["frequency"]
+    new_analysis = routine["analysis"]["new"]
     obj_response.attr("option[value|='%s']" % analysis_method, "selected", "selected")
     obj_response.attr("#num-shots", "value", num_shots)
     obj_response.attr("#frequency", "value", frequency)
     update_shots_choice(obj_response, routine, data_dir)
     update_filetype(obj_response, routine)
     obj_response.call("check_shots_display")
+    if new_analysis:
+        obj_response.attr("#oldnew-toggle", "checked", "checked")
+    else:
+        obj_response.attr("#oldnew-toggle", "checked", "")
 
 
 # update the routine functions table
@@ -281,7 +286,7 @@ def add_routine(obj_response, files, form_values, data):
         os.remove(os.path.join(routine_path, filename))
         return data
     # set default analysis options
-    default_analysis_options = {"select-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": []}
+    default_analysis_options = {"select-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": [], "new": True}
     routine_all_info = dict(name=filename, path=path, shots_dir="", json="", analysis=default_analysis_options)
     routine_all_info.update(routine_info)
     data['routines'].append(routine_all_info)
@@ -468,6 +473,13 @@ class MainHandler(object):
         update_analysis_options(obj_response, routine, data["data_dir"])
         report_status(obj_response, "status", "Analysis options for '%s' reverted" % routine_name)
 
+    @staticmethod
+    @update_JSON()
+    def update_analysis_type(obj_response, routine_name, new_analysis, data={}):
+        routine = [routine for routine in data["routines"] if routine["name"] == routine_name][0]
+        routine["analysis"]["new"] = new_analysis
+        return data
+
 # Sijax handlers for the plot page
 class PlotHandler(object):
 
@@ -514,7 +526,6 @@ class PlotHandler(object):
             report_status(obj_response, "status", "Analysis started")
         # start the timer
         obj_response.call("start_timer")
-
 
 # Sijax comet handlers for the plot page
 class PlotCometHandler(object):

@@ -115,3 +115,16 @@ function select_filetype(filetypes) {
     $("#filetype").trigger("change");
     deactivate_buttons("#update-analysis, #revert-analysis");
 }
+
+$("#oldnew-toggle").on("change", function () {
+    var routine_name = $(".selected").text();
+    var new_analysis = $(this).prop("checked");
+    if (new_analysis) {
+        $("#new-analysis-options").show();
+        $("#old-analysis-options").hide();
+    } else {
+        $("#new-analysis-options").hide();
+        $("#old-analysis-options").show();
+    }
+    Sijax.request("update_analysis_type", [routine_name, new_analysis]);
+});

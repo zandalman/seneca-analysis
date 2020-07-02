@@ -111,6 +111,14 @@
             <div class="column right">
                 <i class="material-icons button inactive" style="color:darkcyan;" title="revert analysis" id="revert-analysis">undo</i>
                 <i class="material-icons button inactive" style="color:darkcyan;" title="update analysis options" id="update-analysis">refresh</i>
+                <div id="oldnew-toggle-container">
+                    <i class="material-icons" title="analyse old data">schedule</i>
+                    <label class="switch">
+                        <input type="checkbox" id="oldnew-toggle">
+                        <span class="slider"></span>
+                    </label>
+                    <i class="material-icons" title="analyse new data">autorenew</i>
+                </div>
             </div>
         </div><hr>
         <div class="row">
@@ -132,40 +140,42 @@
             </div>
             <div class="column right"><br/>
                 <form id="analysis-options">
-                    <div id="select-shots-by-container">
-                        <label for="select-shots-by" class="analysis-label"><b>shot selection method</b>:</label>
-                        <select name="select-shots-by" id="select-shots-by" class="selection-box button">
-                            <option value="choice">choice</option>
-                            <option value="last-created">last created</option>
-                            <option value="last-modified">last modified</option>
-                            <option value="new">new files</option>
-                            <option value="modified">modified files</option>
-                            <option value="all">all</option>
-                        </select><br/><br/>
-                    </div>
-                    <div id="filetype-container">
-                        <label for="filetype[]" class="analysis-label"><b>filetype filter</b>:</label>
-                        <select name="filetype[]" id="filetype" style="width: 50%;" multiple>
-                            <option value="csv">csv</option>
-                            <option value="jpeg/jpg">jpeg/jpg</option>
-                            <option value="hdf5/h5">hdf5/h5</option>
-                            <option value="json">json</option>
-                            <option value="pdf">pdf</option>
-                            <option value="png">png</option>
-                            <option value="xml">xml</option>
-                        </select><br/><br/>
-                    </div>
-                    <div id="num-shots-container">
-                        <label for="num-shots" class="analysis-label" id="num-shots-label"><b># shots per analysis</b>:</label>
-                        <input type="number" name="num-shots" id="num-shots" min="1" value="1" class="num-box"/><br/><br/>
-                    </div>
-                    <div id="shots-choice-container">
-                        <label for="shots-choice[]" class="analysis-label"><b>shots</b>:</label>
-                        <select name="shots-choice[]" id="shots-choice" multiple></select><br/><br/>
-                    </div>
-                    <div id="frequency-container">
-                        <label for="frequency" class="analysis-label"><b>frequency</b> (Hz):</label>
-                        <input type="number" name="frequency" id="frequency" class="num-box" min="0" value=".2" step="any"><br/><br/>
+                    <div id="new-analysis-options">
+                        <div id="select-shots-by-container">
+                            <label for="select-shots-by" class="analysis-label"><b>shot selection method</b>:</label>
+                            <select name="select-shots-by" id="select-shots-by" class="selection-box button">
+                                <option value="choice">choice</option>
+                                <option value="last-created">last created</option>
+                                <option value="last-modified">last modified</option>
+                                <option value="new">new files</option>
+                                <option value="modified">modified files</option>
+                                <option value="all">all</option>
+                            </select><br/><br/>
+                        </div>
+                        <div id="filetype-container">
+                            <label for="filetype[]" class="analysis-label"><b>filetype filter</b>:</label>
+                            <select name="filetype[]" id="filetype" style="width: 50%;" multiple>
+                                <option value="csv">csv</option>
+                                <option value="jpeg/jpg">jpeg/jpg</option>
+                                <option value="hdf5/h5">hdf5/h5</option>
+                                <option value="json">json</option>
+                                <option value="pdf">pdf</option>
+                                <option value="png">png</option>
+                                <option value="xml">xml</option>
+                            </select><br/><br/>
+                        </div>
+                        <div id="num-shots-container">
+                            <label for="num-shots" class="analysis-label" id="num-shots-label"><b># shots per analysis</b>:</label>
+                            <input type="number" name="num-shots" id="num-shots" min="1" value="1" class="num-box"/><br/><br/>
+                        </div>
+                        <div id="shots-choice-container">
+                            <label for="shots-choice[]" class="analysis-label"><b>shots</b>:</label>
+                            <select name="shots-choice[]" id="shots-choice" multiple></select><br/><br/>
+                        </div>
+                        <div id="frequency-container">
+                            <label for="frequency" class="analysis-label"><b>frequency</b> (Hz):</label>
+                            <input type="number" name="frequency" id="frequency" class="num-box" min="0" value=".2" step="any"><br/><br/>
+                        </div>
                     </div>
                 </form>
             </div>
