@@ -37,10 +37,30 @@ def get_shots_paths(analysis_options, shots_dir, data_dir):
         shots = [shot for shot in shots if shot.rsplit('.', 1)[1].lower() in all_filetypes]
     return shots
 
+def get_all_shots_paths_old(analysis_options, shots_dir, data_dir):
+    order_method = analysis_options["order-shots-by"]
+    all_shots = [os.path.join(data_dir, shots_dir, shot) for shot in os.listdir(os.path.join(data_dir, shots_dir)) if os.path.isfile(os.path.join(data_dir, shots_dir, shot)) and not shot.startswith(".")]
+    filetypes = analysis_options["filetype"]
+    if order_method == "choice":
+        shots = [os.path.join(data_dir, shots_dir, shot) for shot in analysis_options["choice"]]
+    elif order_method == "creation":
+        all_shots.sort(key=os.path.getctime)
+        shots = all_shots
+    elif order_method == "modification":
+        all_shots.sort(key=os.path.getmtime)
+        shots = all_shots
+    if filetypes:
+        all_filetypes = []
+        for filetype in filetypes:
+            all_filetypes += filetype.split("/")
+        shots = [shot for shot in shots if shot.rsplit('.', 1)[1].lower() in all_filetypes]
+    return shots
+
 
 # run the routines and generate the plot urls
-def generate_plot_urls(routine, routine_path, data_dir):
-    shots_paths = get_shots_paths(routine["analysis"], routine["shots_dir"], data_dir)
+def generate_plot_urls(routine, routine_path, data_dir, shots_paths=None):
+    if not shots_paths:
+        shots_paths = get_shots_paths(routine["analysis"]["new_options"], routine["shots_dir"], data_dir)
     path_to_routine = os.path.join(routine_path, routine["name"])
     # create a list of arguments to pass to the command line
     arguments = ["python", path_to_routine]
@@ -109,8 +129,11 @@ def remove_plots(obj_response):
 
 
 # initialize all plots and data tables for a routine
-def initialize_routine(obj_response, routine_path, routine, data_dir):
-    error, plots = generate_plot_urls(routine, routine_path, data_dir)
+def initialize_routine(obj_response, routine_path, routine, data_dir, initial_shots):
+    if initial_shots:
+        error, plots = generate_plot_urls(routine, routine_path, data_dir, shots_paths=initial_shots)
+    else:
+        error, plots = generate_plot_urls(routine, routine_path, data_dir)
     if error:
         return True, plots
     routine_name = routine["name"]

@@ -152,30 +152,40 @@
                                 <option value="all">all</option>
                             </select><br/><br/>
                         </div>
-                        <div id="filetype-container">
-                            <label for="filetype[]" class="analysis-label"><b>filetype filter</b>:</label>
-                            <select name="filetype[]" id="filetype" style="width: 50%;" multiple>
-                                <option value="csv">csv</option>
-                                <option value="jpeg/jpg">jpeg/jpg</option>
-                                <option value="hdf5/h5">hdf5/h5</option>
-                                <option value="json">json</option>
-                                <option value="pdf">pdf</option>
-                                <option value="png">png</option>
-                                <option value="xml">xml</option>
+                    </div>
+                    <div id="old-analysis-options">
+                        <div id="order-shots-by-container">
+                            <label for="order-shots-by" class="analysis-label"><b>shot ordering method</b>:</label>
+                            <select name="order-shots-by" id="order-shots-by" class="selection-box button">
+                                <option value="choice">choice</option>
+                                <option value="creation">creation time</option>
+                                <option value="modification">modification time</option>
                             </select><br/><br/>
                         </div>
-                        <div id="num-shots-container">
-                            <label for="num-shots" class="analysis-label" id="num-shots-label"><b># shots per analysis</b>:</label>
-                            <input type="number" name="num-shots" id="num-shots" min="1" value="1" class="num-box"/><br/><br/>
-                        </div>
-                        <div id="shots-choice-container">
-                            <label for="shots-choice[]" class="analysis-label"><b>shots</b>:</label>
-                            <select name="shots-choice[]" id="shots-choice" multiple></select><br/><br/>
-                        </div>
-                        <div id="frequency-container">
-                            <label for="frequency" class="analysis-label"><b>frequency</b> (Hz):</label>
-                            <input type="number" name="frequency" id="frequency" class="num-box" min="0" value=".2" step="any"><br/><br/>
-                        </div>
+                    </div>
+                    <div id="filetype-container">
+                        <label for="filetype[]" class="analysis-label"><b>filetype filter</b>:</label>
+                        <select name="filetype[]" id="filetype" style="width: 50%;" multiple>
+                            <option value="csv">csv</option>
+                            <option value="jpeg/jpg">jpeg/jpg</option>
+                            <option value="hdf5/h5">hdf5/h5</option>
+                            <option value="json">json</option>
+                            <option value="pdf">pdf</option>
+                            <option value="png">png</option>
+                            <option value="xml">xml</option>
+                        </select><br/><br/>
+                    </div>
+                    <div id="num-shots-container">
+                        <label for="num-shots" class="analysis-label" id="num-shots-label"><b># shots per analysis</b>:</label>
+                        <input type="number" name="num-shots" id="num-shots" min="1" value="1" class="num-box"/><br/><br/>
+                    </div>
+                    <div id="shots-choice-container">
+                        <label for="shots-choice[]" class="analysis-label"><b>shots</b>:</label>
+                        <select name="shots-choice[]" id="shots-choice" multiple></select><br/><br/>
+                    </div>
+                    <div id="frequency-container">
+                        <label for="frequency" class="analysis-label"><b>frequency</b> (Hz):</label>
+                        <input type="number" name="frequency" id="frequency" class="num-box" min="0" value=".2" step="any"><br/><br/>
                     </div>
                 </form>
             </div>

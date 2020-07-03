@@ -23,6 +23,7 @@ JSON_path = os.path.join(routine_path, "routines.json")
 sys.path.append(routine_path)
 # set global variables
 analysis_on = False
+shots_to_analyse = {}
 
 
 # read a python script and write information to json
@@ -170,7 +171,10 @@ def update_shots_dir_options(obj_response, routine, data_dir):
         obj_response.css("#shots-table", "display", "inline")
         shots_dir_path = os.path.join(data_dir, shots_dir)
         update_shots_count(obj_response, shots_dir_path)
-        update_shots_choice(obj_response, routine, data_dir)
+        if routine["analysis"]["new"]:
+            update_shots_choice(obj_response, routine["analysis"]["new_options"], shots_dir, data_dir)
+        else:
+            update_shots_choice(obj_response, routine["analysis"]["old_options"], shots_dir, data_dir)
 
 
 # check if a file is json loadable
@@ -204,9 +208,9 @@ def update_json_options(obj_response, routine, data_dir):
 
 
 # update the shots choice options
-def update_shots_choice(obj_response, routine, data_dir):
-    choice = routine["analysis"]["choice"]
-    shots_dir_path = os.path.join(data_dir, routine["shots_dir"])
+def update_shots_choice(obj_response, analysis_options, shots_dir, data_dir):
+    choice = analysis_options["choice"]
+    shots_dir_path = os.path.join(data_dir, shots_dir)
     # list all files in the shots directory
     shots = [shot for shot in os.listdir(shots_dir_path) if os.path.isfile(os.path.join(shots_dir_path, shot)) and not shot.startswith(".")]
     # reset the shots choice options
@@ -217,27 +221,34 @@ def update_shots_choice(obj_response, routine, data_dir):
         if shot in choice:
             obj_response.attr("option[value|='%s']" % shot, "selected", "selected")
 
-def update_filetype(obj_response, routine):
-    filetypes = routine["analysis"]["filetype"]
+def update_filetype(obj_response, analysis_options):
+    filetypes = analysis_options["filetype"]
     obj_response.call("select_filetype", [filetypes])
 
 # update the analysis options
 def update_analysis_options(obj_response, routine, data_dir):
-    analysis_method = routine["analysis"]["select-shots-by"]
-    num_shots = routine["analysis"]["num-shots"]
-    frequency = routine["analysis"]["frequency"]
     new_analysis = routine["analysis"]["new"]
-    obj_response.attr("option[value|='%s']" % analysis_method, "selected", "selected")
+    if new_analysis:
+        obj_response.css("#old-analysis-options", "display", "none")
+        obj_response.css("#new-analysis-options", "display", "inline")
+        obj_response.attr("#oldnew-toggle", "checked", "checked")
+        analysis_options = routine["analysis"]["new_options"]
+        analysis_method = analysis_options["select-shots-by"]
+        obj_response.attr("#select-shots-by option[value|='%s']" % analysis_method, "selected", "selected")
+    else:
+        obj_response.css("#old-analysis-options", "display", "inline")
+        obj_response.css("#new-analysis-options", "display", "none")
+        obj_response.attr("#oldnew-toggle", "checked", "")
+        analysis_options = routine["analysis"]["old_options"]
+        analysis_method = analysis_options["order-shots-by"]
+        obj_response.attr("#order-shots-by option[value|='%s']" % analysis_method, "selected", "selected")
+    num_shots = analysis_options["num-shots"]
+    frequency = analysis_options["frequency"]
     obj_response.attr("#num-shots", "value", num_shots)
     obj_response.attr("#frequency", "value", frequency)
-    update_shots_choice(obj_response, routine, data_dir)
-    update_filetype(obj_response, routine)
+    update_shots_choice(obj_response, analysis_options, routine["shots_dir"], data_dir)
+    update_filetype(obj_response, analysis_options)
     obj_response.call("check_shots_display")
-    if new_analysis:
-        obj_response.attr("#oldnew-toggle", "checked", "checked")
-    else:
-        obj_response.attr("#oldnew-toggle", "checked", "")
-
 
 # update the routine functions table
 def update_functions(obj_response, routine):
@@ -286,7 +297,9 @@ def add_routine(obj_response, files, form_values, data):
         os.remove(os.path.join(routine_path, filename))
         return data
     # set default analysis options
-    default_analysis_options = {"select-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": [], "new": True}
+    default_new_analysis_options = {"select-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": []}
+    default_old_analysis_options = {"order-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": []}
+    default_analysis_options = dict(new=True, new_options=default_new_analysis_options, old_options=default_old_analysis_options)
     routine_all_info = dict(name=filename, path=path, shots_dir="", json="", analysis=default_analysis_options)
     routine_all_info.update(routine_info)
     data['routines'].append(routine_all_info)
@@ -317,6 +330,57 @@ def add_support(obj_response, files, form_values, data):
     obj_response.call('add_file', [path, filename, False])
     report_status(obj_response, "status", "'%s' successfully uploaded" % filename)
     return data
+
+def analyse_routine_new(obj_response, data_dir, routine, period):
+    global analysis_on, routine_path, JSON_path
+    analysis_on = True
+    reported_error = False
+    # loop analysis until paused or stopped
+    while analysis_on:
+        iter_start = time.time()
+        error, plots = generate_plot_urls(routine, routine_path, data_dir)
+        if error:
+            report_status(obj_response, "status", plots)
+            obj_response.call("stop_analysis")
+        for plot in plots:
+            update_plot(obj_response, plot["url"], plot["plot_id"], plot["data"], plot["table_id"], routine["name"])
+            yield obj_response
+        sleep_time = period - (time.time() - iter_start)
+        if sleep_time >= 0:
+            time.sleep(sleep_time)
+        elif not reported_error and analysis_on:
+            report_status(obj_response, "status", "Warning: update period is faster than execution time by %.3g seconds for '%s'. Try setting a lower frequency" % (-sleep_time, routine["name"]))
+            reported_error = True
+
+def analyse_routine_old(obj_response, data_dir, routine, period):
+    global analysis_on, routine_path, JSON_path, shots_to_analyse
+    analysis_on = True
+    reported_error = False
+    num_shots = int(routine["analysis"]["old_options"]["num-shots"])
+    while analysis_on:
+        iter_start = time.time()
+        if not shots_to_analyse[routine["name"]]:
+            report_status(obj_response, "status", "Analysis for '%s' complete" % routine["name"])
+            if not any(shots_to_analyse.values()):
+                obj_response.call("stop_analysis")
+            break
+        error, plots = generate_plot_urls(routine, routine_path, data_dir, shots_paths=shots_to_analyse[routine["name"]][:num_shots])
+        if error:
+            report_status(obj_response, "status", plots)
+            obj_response.call("stop_analysis")
+        for plot in plots:
+            update_plot(obj_response, plot["url"], plot["plot_id"], plot["data"], plot["table_id"], routine["name"])
+            yield obj_response
+        if len(shots_to_analyse[routine["name"]]) > num_shots:
+            shots_to_analyse[routine["name"]] = shots_to_analyse[routine["name"]][num_shots:]
+        else:
+            shots_to_analyse[routine["name"]] = []
+        sleep_time = period - (time.time() - iter_start)
+        if sleep_time >= 0:
+            time.sleep(sleep_time)
+        elif not reported_error:
+            report_status(obj_response, "status", "Warning: update period is faster than execution time by %.3g seconds for '%s'. Try setting a lower frequency" % (-sleep_time, routine["name"]))
+            reported_error = True
 
 # Sijax handlers for the main page
 class MainHandler(object):
@@ -438,7 +502,11 @@ class MainHandler(object):
             obj_response.css("#shots-table", "display", "inline")
             shots_dir_path = os.path.join(data["data_dir"], shots_dir)
             update_shots_count(obj_response, shots_dir_path)
-            update_shots_choice(obj_response, routine, data["data_dir"])
+            if routine["analysis"]["new"]:
+                update_shots_choice(obj_response, routine["analysis"]["new_options"], shots_dir, data["data_dir"])
+            else:
+                pass
+                #update_shots_choice(obj_response, routine["analysis"]["old_options"], shots_dir, data["data_dir"])
         return data
 
     # set the options for the read-write json file
@@ -457,12 +525,18 @@ class MainHandler(object):
     # update analysis options
     @staticmethod
     @update_JSON()
-    def update_analysis(obj_response, routine_name, analysis_options, shots_choice, filetypes, data={}):
+    def set_analysis_options(obj_response, routine_name, analysis_options, shots_choice, filetypes, new_analysis, data={}):
         routine = [routine for routine in data["routines"] if routine["name"] == routine_name][0]
         analysis_options["choice"] = [shot["id"] for shot in shots_choice]
         analysis_options["filetype"] = [filetype["id"] for filetype in filetypes]
-        routine["analysis"] = analysis_options
-        report_status(obj_response, "status", "Set the analysis options for '%s' to '%s'" % (routine_name, analysis_options))
+        if new_analysis:
+            analysis_options.pop("order-shots-by")
+            routine["analysis"]["new_options"] = analysis_options
+            report_status(obj_response, "status", "Set the new analysis options for '%s' to '%s'" % (routine_name, analysis_options))
+        else:
+            analysis_options.pop("select-shots-by")
+            routine["analysis"]["old_options"] = analysis_options
+            report_status(obj_response, "status", "Set the old analysis options for '%s' to '%s'" % (routine_name, analysis_options))
         return data
 
     # refresh analysis options
@@ -475,9 +549,10 @@ class MainHandler(object):
 
     @staticmethod
     @update_JSON()
-    def update_analysis_type(obj_response, routine_name, new_analysis, data={}):
+    def set_analysis_type(obj_response, routine_name, new_analysis, data={}):
         routine = [routine for routine in data["routines"] if routine["name"] == routine_name][0]
         routine["analysis"]["new"] = new_analysis
+        update_analysis_options(obj_response, routine, data["data_dir"])
         return data
 
 # Sijax handlers for the plot page
@@ -503,21 +578,34 @@ class PlotHandler(object):
     @staticmethod
     @update_JSON(write=False)
     def analyse(obj_response, paused, data={}):
-        global routine_path
+        global routine_path, shots_to_analyse
         data_dir = data["data_dir"]
         if not paused:
             remove_plots(obj_response)
         for routine in data["routines"]:
+            new_analysis = routine["analysis"]["new"]
+            initial_shots = []
+            if new_analysis:
+                period = get_period(routine["analysis"]["new_options"])
+            else:
+                period = get_period(routine["analysis"]["old_options"])
+                shots_to_analyse[routine["name"]] = get_all_shots_paths_old(routine["analysis"]["old_options"], routine["shots_dir"], data_dir)
+                num_shots = int(routine["analysis"]["old_options"]["num-shots"])
+                initial_shots = shots_to_analyse[routine["name"]][:num_shots]
             if is_routine_active(routine):
                 if not paused:
                     # initialize the plots and data tables
-                    initialization_error, plot_ids = initialize_routine(obj_response, routine_path, routine, data_dir)
+                    initialization_error, plot_ids = initialize_routine(obj_response, routine_path, routine, data_dir, initial_shots)
                     if initialization_error:
                         report_status(obj_response, "status", "Analysis failed: '%s: %s'" % (plot_ids.__class__.__name__, plot_ids))
                         obj_response.attr("#start-analysis", "class", "material-icons button")
                         obj_response.attr("#stop-analysis, #pause-analysis", "class", "material-icons button inactive")
                         return
-                period = get_period(routine["analysis"])
+                if not new_analysis:
+                    if len(shots_to_analyse[routine["name"]]) > num_shots:
+                        shots_to_analyse[routine["name"]] = shots_to_analyse[routine["name"]][num_shots:]
+                    else:
+                        shots_to_analyse[routine["name"]] = []
                 # make a request for analyse_routine
                 obj_response.call("make_comet_request", [data_dir, routine, period])
         if paused:
@@ -533,25 +621,11 @@ class PlotCometHandler(object):
     # periodically update the plot and data tables for a routine
     @staticmethod
     def analyse_routine(obj_response, data_dir, routine, period):
-        global analysis_on, routine_path, JSON_path
-        analysis_on = True
-        reported_error = False
-        # loop analysis until paused or stopped
-        while analysis_on:
-            iter_start = time.time()
-            error, plots = generate_plot_urls(routine, routine_path, data_dir)
-            if error:
-                report_status(obj_response, "status", plots)
-                PlotHandler.stop_analysis(obj_response)
-            for plot in plots:
-                update_plot(obj_response, plot["url"], plot["plot_id"], plot["data"], plot["table_id"], routine["name"])
-                yield obj_response
-            sleep_time = period - (time.time() - iter_start)
-            if sleep_time >= 0:
-                time.sleep(sleep_time)
-            elif not reported_error:
-                report_status(obj_response, "status", "Warning: update period is faster than execution time by %.3g seconds for '%s'. Try setting a lower frequency" % (-sleep_time, routine["name"]))
-                reported_error = True
+        new_analysis = routine["analysis"]["new"]
+        if new_analysis:
+            yield from analyse_routine_new(obj_response, data_dir, routine, period)
+        else:
+            yield from analyse_routine_old(obj_response, data_dir, routine, period)
 
 # route the main page
 @flask_sijax.route(app, '/')

@@ -97,13 +97,17 @@ function make_comet_request(data_dir, routine, period) {
 }
 
 // stop the analysis
+function stop_analysis() {
+    paused = false;
+    Sijax.request("stop_analysis");
+    $("#start-analysis").removeClass("inactive");
+    $("#stop-analysis").addClass("inactive");
+    $("#pause-analysis").addClass("inactive");
+}
+
 $("#stop-analysis").on("click", function () {
     if (!$(this).hasClass("inactive")) {
-        paused = false;
-        Sijax.request("stop_analysis");
-        $("#start-analysis").removeClass("inactive");
-        $("#stop-analysis").addClass("inactive");
-        $("#pause-analysis").addClass("inactive");
+        stop_analysis();
     }
 });
 

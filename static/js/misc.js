@@ -57,20 +57,28 @@ $("#revert-analysis").on("click", function () {
 
 // update which analysis options are available
 function check_shots_display() {
-    var select = document.getElementById("select-shots-by");
-    var selected_method = select.options[select.selectedIndex].value;
+    var new_analysis = $("#oldnew-toggle").prop("checked");
+    var select;
+    var selected_method;
+    if (new_analysis) {
+        select = document.getElementById("select-shots-by");
+        selected_method = select.options[select.selectedIndex].value;
+        var methods_no_num_shots = ["all", "new", "modified"];
+        if (methods_no_num_shots.indexOf(selected_method) >= 0) {
+            $("#num-shots-container").hide();
+        } else {
+            $("#num-shots-container").show();
+        }
+    } else {
+        select = document.getElementById("order-shots-by");
+        selected_method = select.options[select.selectedIndex].value;
+    }
     if (selected_method === "choice") {
         $("#shots-choice-container").show();
         $("#filetype-container").hide();
     } else {
         $("#shots-choice-container").hide();
         $("#filetype-container").show();
-    }
-    var methods_no_num_shots = ["all", "new", "modified"];
-    if (methods_no_num_shots.indexOf(selected_method) >= 0) {
-        $("#num-shots-container").hide();
-    } else {
-        $("#num-shots-container").show();
     }
 }
 
@@ -89,7 +97,8 @@ $("#update-analysis").on("click", function () {
         var analysis_options = Sijax.getFormValues("#analysis-options");
         var shots_choice = $("#shots-choice").select2("data");
         var filetype = $("#filetype").select2("data");
-        Sijax.request("update_analysis", [routine_name, analysis_options, shots_choice, filetype]);
+        var new_analysis = $("#oldnew-toggle").prop("checked");
+        Sijax.request("set_analysis_options", [routine_name, analysis_options, shots_choice, filetype, new_analysis]);
         deactivate_buttons("#update-analysis, #revert-analysis");
     }
 });
@@ -119,12 +128,6 @@ function select_filetype(filetypes) {
 $("#oldnew-toggle").on("change", function () {
     var routine_name = $(".selected").text();
     var new_analysis = $(this).prop("checked");
-    if (new_analysis) {
-        $("#new-analysis-options").show();
-        $("#old-analysis-options").hide();
-    } else {
-        $("#new-analysis-options").hide();
-        $("#old-analysis-options").show();
-    }
-    Sijax.request("update_analysis_type", [routine_name, new_analysis]);
+    Sijax.request("set_analysis_type", [routine_name, new_analysis]);
+    deactivate_buttons("#update-analysis, #revert-analysis");
 });
