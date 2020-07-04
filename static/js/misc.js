@@ -50,7 +50,8 @@ $("#json-options").on("change", function () {
 $("#revert-analysis").on("click", function () {
     if (!$(this).hasClass("inactive")) {
         var routine_name = $(".selected").text();
-        Sijax.request("refresh_analysis", [routine_name]);
+        var new_analysis = $("#oldnew-toggle").prop("checked");
+        Sijax.request("refresh_analysis", [routine_name, new_analysis]);
         deactivate_buttons("#update-analysis, #revert-analysis");
     }
 });
@@ -64,6 +65,8 @@ function check_shots_display() {
         select = document.getElementById("select-shots-by");
         selected_method = select.options[select.selectedIndex].value;
         var methods_no_num_shots = ["all", "new", "modified"];
+        $("#regex-container").show();
+        $("#regex-label-des").text("filter");
         if (methods_no_num_shots.indexOf(selected_method) >= 0) {
             $("#num-shots-container").hide();
         } else {
@@ -72,6 +75,12 @@ function check_shots_display() {
     } else {
         select = document.getElementById("order-shots-by");
         selected_method = select.options[select.selectedIndex].value;
+        if (selected_method === "regex") {
+            $("#regex-container").show();
+            $("#regex-label-des").text("sorter");
+        } else {
+            $("#regex-container").hide();
+        }
     }
     if (selected_method === "choice") {
         $("#shots-choice-container").show();
@@ -114,7 +123,12 @@ function deactivate_buttons(button_selector) {
 }
 
 // change available analysis options based on current analysis options
-$("#select-shots-by, #num-shots, #shots-choice, #frequency, #filetype").on("change", function () {
+$(".analysis-input").on("change", function () {
+    activate_buttons("#update-analysis, #revert-analysis");
+    check_shots_display();
+});
+
+$("#regex").on("input", function () {
     activate_buttons("#update-analysis, #revert-analysis");
     check_shots_display();
 });
@@ -128,6 +142,6 @@ function select_filetype(filetypes) {
 $("#oldnew-toggle").on("change", function () {
     var routine_name = $(".selected").text();
     var new_analysis = $(this).prop("checked");
+    $("#revert-analysis").trigger("click");
     Sijax.request("set_analysis_type", [routine_name, new_analysis]);
-    deactivate_buttons("#update-analysis, #revert-analysis");
 });

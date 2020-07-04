@@ -4,7 +4,17 @@ import os
 import subprocess
 import json
 import time
+import re
 
+def filter_regex(lst, regex, sort=False):
+    filt = re.compile(regex)
+    filtered_list = [item for item in lst if re.match(filt, item)]
+    if sort:
+        sorted_list = sorted(lst, key=lambda item: re.search(regex, item).group(0))
+        print([re.search(regex, item).group(0) for item in lst])
+        return sorted_list
+    else:
+        return filtered_list
 
 # get the paths of the measurement files to analyse based on the analysis options
 def get_shots_paths(analysis_options, shots_dir, data_dir):
@@ -14,6 +24,7 @@ def get_shots_paths(analysis_options, shots_dir, data_dir):
     all_shots = [os.path.join(data_dir, shots_dir, shot) for shot in os.listdir(os.path.join(data_dir, shots_dir)) if os.path.isfile(os.path.join(data_dir, shots_dir, shot)) and not shot.startswith(".")]
     num_shots = int(analysis_options["num-shots"])
     filetypes = analysis_options["filetype"]
+    regex = analysis_options["regex"]
     now = time.time()
     period = 1 / get_period(analysis_options)
     if select_method == "choice":
@@ -35,6 +46,8 @@ def get_shots_paths(analysis_options, shots_dir, data_dir):
         for filetype in filetypes:
             all_filetypes += filetype.split("/")
         shots = [shot for shot in shots if shot.rsplit('.', 1)[1].lower() in all_filetypes]
+    if regex:
+        shots = filter_regex(shots, regex)
     return shots
 
 def get_all_shots_paths_old(analysis_options, shots_dir, data_dir):
@@ -44,11 +57,14 @@ def get_all_shots_paths_old(analysis_options, shots_dir, data_dir):
     if order_method == "choice":
         shots = [os.path.join(data_dir, shots_dir, shot) for shot in analysis_options["choice"]]
     elif order_method == "creation":
-        all_shots.sort(key=os.path.getctime)
-        shots = all_shots
+        shots = all_shots(key=os.path.getctime)
     elif order_method == "modification":
-        all_shots.sort(key=os.path.getmtime)
-        shots = all_shots
+        shots = all_shots.sort(key=os.path.getmtime)
+    elif order_method == "sort":
+        shots = sorted(all_shots)
+    elif order_method == "regex":
+        regex = analysis_options["regex"]
+        shots = filter_regex(all_shots, regex, sort=True)
     if filetypes:
         all_filetypes = []
         for filetype in filetypes:

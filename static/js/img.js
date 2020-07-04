@@ -6,7 +6,7 @@ var timerID = -1;
 
 // go to the analysis settings page
 $("#to-analysis").on("click", function () {
-    Sijax.request("stop_analysis");
+    stop_analysis();
     location.href="/";
 });
 

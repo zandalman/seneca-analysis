@@ -128,6 +128,9 @@ p {
     width: 50px;
     outline: none;
 }
+.text-box {
+    outline: none;
+}
 #to-plots {
     position: absolute;
     top: 20px;

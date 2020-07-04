@@ -8,7 +8,10 @@ import json
 import inspect
 import importlib
 import time
+import re
 from plots import *
+
+
 # initialize and configure Flask
 app = Flask(__name__)
 sijax_path = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
@@ -244,8 +247,10 @@ def update_analysis_options(obj_response, routine, data_dir):
         obj_response.attr("#order-shots-by option[value|='%s']" % analysis_method, "selected", "selected")
     num_shots = analysis_options["num-shots"]
     frequency = analysis_options["frequency"]
+    regex = analysis_options["regex"]
     obj_response.attr("#num-shots", "value", num_shots)
     obj_response.attr("#frequency", "value", frequency)
+    obj_response.attr("#regex", "value", regex)
     update_shots_choice(obj_response, analysis_options, routine["shots_dir"], data_dir)
     update_filetype(obj_response, analysis_options)
     obj_response.call("check_shots_display")
@@ -297,8 +302,8 @@ def add_routine(obj_response, files, form_values, data):
         os.remove(os.path.join(routine_path, filename))
         return data
     # set default analysis options
-    default_new_analysis_options = {"select-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": []}
-    default_old_analysis_options = {"order-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": []}
+    default_new_analysis_options = {"select-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": [], "regex": ""}
+    default_old_analysis_options = {"order-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": [], "regex": ""}
     default_analysis_options = dict(new=True, new_options=default_new_analysis_options, old_options=default_old_analysis_options)
     routine_all_info = dict(name=filename, path=path, shots_dir="", json="", analysis=default_analysis_options)
     routine_all_info.update(routine_info)
@@ -529,6 +534,11 @@ class MainHandler(object):
         routine = [routine for routine in data["routines"] if routine["name"] == routine_name][0]
         analysis_options["choice"] = [shot["id"] for shot in shots_choice]
         analysis_options["filetype"] = [filetype["id"] for filetype in filetypes]
+        try:
+            re.compile(analysis_options["regex"])
+        except re.error:
+            report_status(obj_response, "status", "Warning: '%s' is not a valid regular expression" % analysis_options["regex"])
+            analysis_options["regex"] = ""
         if new_analysis:
             analysis_options.pop("order-shots-by")
             routine["analysis"]["new_options"] = analysis_options
@@ -542,10 +552,13 @@ class MainHandler(object):
     # refresh analysis options
     @staticmethod
     @update_JSON(write=False)
-    def refresh_analysis(obj_response, routine_name, data={}):
+    def refresh_analysis(obj_response, routine_name, new_analysis, data={}):
         routine = [routine for routine in data["routines"] if routine["name"] == routine_name][0]
         update_analysis_options(obj_response, routine, data["data_dir"])
-        report_status(obj_response, "status", "Analysis options for '%s' reverted" % routine_name)
+        if new_analysis:
+            report_status(obj_response, "status", "New data analysis options for '%s' reverted" % routine_name)
+        else:
+            report_status(obj_response, "status", "Old data analysis options for '%s' reverted" % routine_name)
 
     @staticmethod
     @update_JSON()

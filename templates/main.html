@@ -143,7 +143,7 @@
                     <div id="new-analysis-options">
                         <div id="select-shots-by-container">
                             <label for="select-shots-by" class="analysis-label"><b>shot selection method</b>:</label>
-                            <select name="select-shots-by" id="select-shots-by" class="selection-box button">
+                            <select name="select-shots-by" id="select-shots-by" class="selection-box button analysis-input">
                                 <option value="choice">choice</option>
                                 <option value="last-created">last created</option>
                                 <option value="last-modified">last modified</option>
@@ -156,16 +156,22 @@
                     <div id="old-analysis-options">
                         <div id="order-shots-by-container">
                             <label for="order-shots-by" class="analysis-label"><b>shot ordering method</b>:</label>
-                            <select name="order-shots-by" id="order-shots-by" class="selection-box button">
+                            <select name="order-shots-by" id="order-shots-by" class="selection-box button analysis-input">
                                 <option value="choice">choice</option>
                                 <option value="creation">creation time</option>
                                 <option value="modification">modification time</option>
+                                <option value="sort">Python sort</option>
+                                <option value="regex">Python sort by regular expression</option>
                             </select><br/><br/>
                         </div>
                     </div>
+                    <div id="regex-container">
+                        <label for="regex" class="analysis-label" id="regex-label"><b>regular expression <span id="regex-label-des"></span></b>:</label>
+                        <input type="text" name="regex" id="regex" class="text-box analysis-input"/><br/><br/>
+                    </div>
                     <div id="filetype-container">
                         <label for="filetype[]" class="analysis-label"><b>filetype filter</b>:</label>
-                        <select name="filetype[]" id="filetype" style="width: 50%;" multiple>
+                        <select name="filetype[]" id="filetype" style="width: 50%;" class="analysis-input" multiple>
                             <option value="csv">csv</option>
                             <option value="jpeg/jpg">jpeg/jpg</option>
                             <option value="hdf5/h5">hdf5/h5</option>
@@ -177,15 +183,15 @@
                     </div>
                     <div id="num-shots-container">
                         <label for="num-shots" class="analysis-label" id="num-shots-label"><b># shots per analysis</b>:</label>
-                        <input type="number" name="num-shots" id="num-shots" min="1" value="1" class="num-box"/><br/><br/>
+                        <input type="number" name="num-shots" id="num-shots" min="1" value="1" class="num-box analysis-input"/><br/><br/>
                     </div>
                     <div id="shots-choice-container">
                         <label for="shots-choice[]" class="analysis-label"><b>shots</b>:</label>
-                        <select name="shots-choice[]" id="shots-choice" multiple></select><br/><br/>
+                        <select name="shots-choice[]" id="shots-choice" class="analysis-input" multiple></select><br/><br/>
                     </div>
                     <div id="frequency-container">
                         <label for="frequency" class="analysis-label"><b>frequency</b> (Hz):</label>
-                        <input type="number" name="frequency" id="frequency" class="num-box" min="0" value=".2" step="any"><br/><br/>
+                        <input type="number" name="frequency" id="frequency" class="num-box analysis-input" min="0" value=".2" step="any"><br/><br/>
                     </div>
                 </form>
             </div>
