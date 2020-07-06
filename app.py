@@ -306,7 +306,7 @@ def add_routine(obj_response, files, form_values, data):
     default_new_analysis_options = {"select-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": [], "regex": ""}
     default_old_analysis_options = {"order-shots-by": "choice", "num-shots": "1", "choice": [], "frequency": ".2", "filetype": [], "regex": ""}
     default_analysis_options = dict(new=True, new_options=default_new_analysis_options, old_options=default_old_analysis_options)
-    routine_all_info = dict(name=filename, path=path, shots_dir="", json="", analysis=default_analysis_options)
+    routine_all_info = dict(name=filename, path=path, shots_dir="", json="", analysis=default_analysis_options, active=True)
     routine_all_info.update(routine_info)
     data['routines'].append(routine_all_info)
     obj_response.call('add_file', [path, filename, True])
@@ -505,6 +505,10 @@ class MainHandler(object):
         update_shots_dir_options(obj_response, routine, data["data_dir"])
         update_json_options(obj_response, routine, data["data_dir"])
         update_analysis_options(obj_response, routine, data["data_dir"])
+        if routine["active"]:
+            obj_response.css("#activate-routine", "color", "green")
+        else:
+            obj_response.css("#activate-routine", "color", "red")
 
     # set shots directory for a routine
     @staticmethod
@@ -580,6 +584,19 @@ class MainHandler(object):
         routine = [routine for routine in data["routines"] if routine["name"] == routine_name][0]
         routine["analysis"]["new"] = new_analysis
         update_analysis_options(obj_response, routine, data["data_dir"])
+        return data
+
+    @staticmethod
+    @update_JSON()
+    def toggle_routine_activation(obj_response, routine_name, data={}):
+        routine = [routine for routine in data["routines"] if routine["name"] == routine_name][0]
+        routine["active"] = not routine["active"]
+        if routine["active"]:
+            obj_response.css("#activate-routine", "color", "green")
+            report_status(obj_response, "status", "'%s' switched to active" % routine_name)
+        else:
+            obj_response.css("#activate-routine", "color", "red")
+            report_status(obj_response, "status", "'%s' switched to inactive" % routine_name)
         return data
 
 # Sijax handlers for the plot page

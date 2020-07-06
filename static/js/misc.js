@@ -145,3 +145,8 @@ $("#oldnew-toggle").on("change", function () {
     $("#revert-analysis").trigger("click");
     Sijax.request("set_analysis_type", [routine_name, new_analysis]);
 });
+
+$("#activate-routine").on("click", function () {
+    var routine_name = $(".selected").text();
+    Sijax.request("toggle_routine_activation", [routine_name]);
+});

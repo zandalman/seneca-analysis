@@ -97,7 +97,7 @@ def generate_plot_urls(routine, routine_path, data_dir, shots_paths=None):
         function_cnt_list = split_stdout[1::4]
         plot_url_list = split_stdout[2::4]
         plot_data_list = split_stdout[3::4]
-        # generate a list of dictories with information about the plots
+        # generate a list of dictionaries with information about the plots
         plots = []
         for i in range(len(function_name_list)):
             plot_id = "plot-container-%s%s" % (function_name_list[i], function_cnt_list[i])
@@ -167,6 +167,8 @@ def initialize_routine(obj_response, routine_path, routine, data_dir, initial_sh
 # check if a routine has enough settings to be used in analysis
 def is_routine_active(routine):
     if routine["shots_dir"] == "":
+        return False
+    elif not routine["active"]:
         return False
     return True
 
