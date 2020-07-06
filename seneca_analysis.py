@@ -48,8 +48,6 @@ def write_data(data):
             with open(data_path, "w") as file:
                 json.dump(data, file)
 
-
-# decorator for plot functions
 def plot(func):
     def plot_wrapper(*args, **kwargs):
         plot_wrapper.counter += 1
@@ -73,7 +71,8 @@ def plot(func):
         img.seek(0)
         plot_url = base64.b64encode(img.getvalue()).decode()
         # write information to standard output
-        sys.stdout.write("@@@%s@@@%s@@@%s@@@%s" % (func.__name__, plot_wrapper.counter, plot_url, data))
+        output_info = "@@@%s@@@%s@@@%s@@@%s" % (func.__name__, plot_wrapper.counter, plot_url, data)
+        sys.stdout.write(output_info)
     # set plot_wrapper attribute to display function information in GUI
     plot_wrapper.plot = True
     plot_wrapper.counter = 0
