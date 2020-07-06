@@ -52,6 +52,7 @@ def write_data(data):
 # decorator for plot functions
 def plot(func):
     def plot_wrapper(*args, **kwargs):
+        plot_wrapper.counter += 1
         # clear plot
         plt.clf()
         with no_stdout():
@@ -72,8 +73,9 @@ def plot(func):
         img.seek(0)
         plot_url = base64.b64encode(img.getvalue()).decode()
         # write information to standard output
-        sys.stdout.write("SEPARATOR%sSEPARATOR%sSEPARATOR%s" % (func.__name__, plot_url, data))
+        sys.stdout.write("@@@%s@@@%s@@@%s@@@%s" % (func.__name__, plot_wrapper.counter, plot_url, data))
     # set plot_wrapper attribute to display function information in GUI
     plot_wrapper.plot = True
+    plot_wrapper.counter = 0
     plot_wrapper.__doc__ = func.__doc__
     return plot_wrapper

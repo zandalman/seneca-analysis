@@ -92,25 +92,26 @@ def generate_plot_urls(routine, routine_path, data_dir, shots_paths=None):
     stdout, stderr = out.communicate()
     try:
         # parse the standard output
-        function_name_list = str(stdout)[:-1].split("SEPARATOR")[1:][::3]
-        plot_url_list = str(stdout)[:-1].split("SEPARATOR")[1:][1::3]
-        plot_data_list = str(stdout)[:-1].split("SEPARATOR")[1:][2::3]
+        split_stdout = str(stdout)[:-1].split("@@@")[1:]
+        function_name_list = split_stdout[::4]
+        function_cnt_list = split_stdout[1::4]
+        plot_url_list = split_stdout[2::4]
+        plot_data_list = split_stdout[3::4]
         # generate a list of dictories with information about the plots
         plots = []
         for i in range(len(function_name_list)):
-            plot_id = "plot-container-%s" % function_name_list[i]
+            plot_id = "plot-container-%s%s" % (function_name_list[i], function_cnt_list[i])
             plot_url = "data:image/png;base64,{}".format(plot_url_list[i])
             plot_data = json.loads(plot_data_list[i])
-            table_id = "table-container-%s" % function_name_list[i]
-            plots.append(dict(plot_id=plot_id, url=plot_url, data=plot_data, table_id=table_id))
+            table_id = "table-container-%s%s" % (function_name_list[i], function_cnt_list[i])
+            plots.append(dict(plot_id=plot_id, url=plot_url, data=plot_data, table_id=table_id, name=function_name_list[i], count=function_cnt_list[i]))
     except IndexError:
         return True, "".join(str(stdout)[2:-1].split("\\n"))
     return False, plots
 
 
 # create and initialize a plot and associated data table
-def create_plot(obj_response, plot_id, table_id, plot_data, plot_url, routine_name, plot_list_HTML):
-    function_name = plot_id[15:]
+def create_plot(obj_response, plot_id, table_id, plot_data, plot_url, routine_name, function_name, plot_list_HTML):
     obj_response.html_append("#plots-container", "<div id='%s' class='plot-container' title='%s (%s)' style='display: none;'></div>" % (plot_id, routine_name, function_name))
     plot_list_HTML += "<li class='plot-list-item invisible' data-id='%s'>%s</li>" % (plot_id, function_name)
     obj_response.call("init_img", [plot_url, plot_id])
@@ -127,10 +128,9 @@ def create_plot(obj_response, plot_id, table_id, plot_data, plot_url, routine_na
 
 
 # update a plot and associated data table
-def update_plot(obj_response, url, plot_id, plot_data, table_id, routine_name):
+def update_plot(obj_response, url, plot_id, plot_data, table_id, routine_name, function_name):
     obj_response.call("update_img", [url, plot_id, "true"])
     if plot_data:
-        function_name = plot_id[15:]
         caption = "<caption>%s (%s)</caption>" % (routine_name, function_name)
         plot_table_body = ""
         for param in sorted(plot_data.keys()):
@@ -158,7 +158,7 @@ def initialize_routine(obj_response, routine_path, routine, data_dir, initial_sh
     plot_list_HTML += "<li class='plot-list-routine-title invisible'><b>%s</b></li>" % routine_name
     for plot in plots:
         plot_ids.append(plot["plot_id"])
-        plot_list_HTML = create_plot(obj_response, plot["plot_id"], plot["table_id"], plot["data"], plot["url"], routine_name, plot_list_HTML)
+        plot_list_HTML = create_plot(obj_response, plot["plot_id"], plot["table_id"], plot["data"], plot["url"], routine_name, plot["name"], plot_list_HTML)
     plot_list_HTML += "</ul>"
     obj_response.html_append("#plot-list", plot_list_HTML)
     return False, plot_ids

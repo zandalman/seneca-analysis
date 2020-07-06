@@ -350,7 +350,7 @@ def analyse_routine_new(obj_response, data_dir, routine, period):
             report_status(obj_response, "status", plots)
             obj_response.call("stop_analysis")
         for plot in plots:
-            update_plot(obj_response, plot["url"], plot["plot_id"], plot["data"], plot["table_id"], routine["name"])
+            update_plot(obj_response, plot["url"], plot["plot_id"], plot["data"], plot["table_id"], routine["name"], plot["name"])
             yield obj_response
         sleep_time = period - (time.time() - iter_start)
         if sleep_time >= 0:
@@ -388,7 +388,7 @@ def analyse_routine_old(obj_response, data_dir, routine, period):
             report_status(obj_response, "status", plots)
             obj_response.call("stop_analysis")
         for plot in plots:
-            update_plot(obj_response, plot["url"], plot["plot_id"], plot["data"], plot["table_id"], routine["name"])
+            update_plot(obj_response, plot["url"], plot["plot_id"], plot["data"], plot["table_id"], routine["name"], plot["name"])
             yield obj_response
         if len(shots_to_analyse[routine["name"]]) > num_shots:
             shots_to_analyse[routine["name"]] = shots_to_analyse[routine["name"]][num_shots:]
