@@ -27,6 +27,7 @@ sys.path.append(routine_path)
 # set global variables
 analysis_on = False
 shots_to_analyse = {}
+start_time = time.time()
 
 
 # read a python script and write information to json
@@ -337,8 +338,9 @@ def add_support(obj_response, files, form_values, data):
     return data
 
 def analyse_routine_new(obj_response, data_dir, routine, period):
-    global analysis_on, routine_path, JSON_path
+    global analysis_on, routine_path, JSON_path, start_time
     analysis_on = True
+    start_time = time.time()
     reported_error = False
     # loop analysis until paused or stopped
     while analysis_on:
@@ -357,17 +359,29 @@ def analyse_routine_new(obj_response, data_dir, routine, period):
             report_status(obj_response, "status", "Warning: update period is faster than execution time by %.3g seconds for '%s'. Try setting a lower frequency" % (-sleep_time, routine["name"]))
             reported_error = True
 
+def format_time(seconds):
+    if seconds > 86400:
+        return "%.3g days" % (seconds / 86400)
+    elif seconds > 3600:
+        return "%.3g hours" % (seconds / 3600)
+    elif seconds > 60:
+        return "%.3g minutes" % (seconds / 60)
+    elif seconds < .001:
+        return "0 seconds"
+    else:
+        return "%.3g seconds" % seconds
+
 def analyse_routine_old(obj_response, data_dir, routine, period):
-    global analysis_on, routine_path, JSON_path, shots_to_analyse
+    global analysis_on, routine_path, JSON_path, shots_to_analyse, start_time
     analysis_on = True
+    start_time = time.time()
     reported_error = False
     num_shots = int(routine["analysis"]["old_options"]["num-shots"])
     while analysis_on:
         iter_start = time.time()
         if not shots_to_analyse[routine["name"]]:
-            report_status(obj_response, "status", "Analysis for '%s' complete" % routine["name"])
-            if not any(shots_to_analyse.values()):
-                obj_response.call("stop_analysis")
+            analysis_time = format_time(time.time() - start_time)
+            report_status(obj_response, "status", "Analysis for '%s' complete after %s" % (routine["name"], analysis_time))
             break
         error, plots = generate_plot_urls(routine, routine_path, data_dir, shots_paths=shots_to_analyse[routine["name"]][:num_shots])
         if error:

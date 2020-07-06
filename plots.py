@@ -26,7 +26,7 @@ def get_shots_paths(analysis_options, shots_dir, data_dir):
     filetypes = analysis_options["filetype"]
     regex = analysis_options["regex"]
     now = time.time()
-    period = 1 / get_period(analysis_options)
+    period = get_period(analysis_options)
     if select_method == "choice":
         shots = [os.path.join(data_dir, shots_dir, shot) for shot in analysis_options["choice"]]
     elif select_method == "all":
@@ -57,9 +57,9 @@ def get_all_shots_paths_old(analysis_options, shots_dir, data_dir):
     if order_method == "choice":
         shots = [os.path.join(data_dir, shots_dir, shot) for shot in analysis_options["choice"]]
     elif order_method == "creation":
-        shots = all_shots(key=os.path.getctime)
+        shots = sorted(all_shots, key=os.path.getctime)
     elif order_method == "modification":
-        shots = all_shots.sort(key=os.path.getmtime)
+        shots = sorted(all_shots, key=os.path.getmtime)
     elif order_method == "sort":
         shots = sorted(all_shots)
     elif order_method == "regex":
