@@ -1,7 +1,6 @@
 
 # import libraries
 import sys
-import getopt
 import json
 import matplotlib.pyplot as plt
 from io import BytesIO
@@ -9,7 +8,9 @@ import base64
 import inspect
 import os
 import contextlib
+import importlib
 
+PATH_TO_PLOT_DATA = "./plot_data"
 
 # context manager to prevent standard output
 @contextlib.contextmanager
@@ -20,33 +21,14 @@ def no_stdout():
     sys.stdout = save_stdout
 
 
-# parse the options and arguments into a dictionary with data from previous measurements and the paths to the current measurement files
-def parse_options():
-    if sys.argv:
-        options = sys.argv[1:]
-        opts = getopt.getopt(options, "d:")
-        data = None
-        # check if -d option exists
-        if len(opts[0]) > 0:
-            data_path = opts[0][0][1]
-            with open(data_path, "r") as file:
-                data = json.load(file)
-        paths = opts[1]
-        return data, paths
-    else:
-        return None, None
+def reset_plot_counters():
+    frame = inspect.stack()[1]
+    filename = os.path.basename(frame[0].f_code.co_filename)
+    routine_mod = importlib.import_module(inspect.getmodulename(filename))
+    plot_functions = [getattr(routine_mod, func[0]) for func in inspect.getmembers(routine_mod, predicate=inspect.isfunction) if not func[0].startswith("_") and hasattr(getattr(routine_mod, func[0]), "plot")]
+    for plot_function in plot_functions:
+        plot_function.counter = 0
 
-
-# write data to the designated read-write file
-def write_data(data):
-    if sys.argv:
-        options = sys.argv[1:]
-        opts = getopt.getopt(options, "d:")
-        # check if -d option exists
-        if len(opts[0]) > 0:
-            data_path = opts[0][0][1]
-            with open(data_path, "w") as file:
-                json.dump(data, file)
 
 def plot(func):
     def plot_wrapper(*args, **kwargs):
@@ -62,7 +44,7 @@ def plot(func):
         plt.annotate("%s (%s)" % (filename, func.__name__), xy=(0, 0), xycoords='figure fraction')
         # if function output is dictionary, encode it as a json string
         if type(data) != dict:
-            data = '{}'
+            data = "{}"
         else:
             data = json.dumps(data)
         # encode plot in base64
@@ -72,9 +54,11 @@ def plot(func):
         plot_url = base64.b64encode(img.getvalue()).decode()
         # write information to standard output
         output_info = "@@@%s@@@%s@@@%s@@@%s" % (func.__name__, plot_wrapper.counter, plot_url, data)
-        sys.stdout.write(output_info)
-    # set plot_wrapper attribute to display function information in GUI
-    plot_wrapper.plot = True
-    plot_wrapper.counter = 0
-    plot_wrapper.__doc__ = func.__doc__
-    return plot_wrapper
+        with open(PATH_TO_PLOT_DATA, 'w') as plot_data:
+            plot_data.write(output_info)
+        # set plot_wrapper attribute to display function information in GUI
+        plot_wrapper.plot = True
+        plot_wrapper.counter = 0
+        plot_wrapper.__doc__ = func.__doc__
+        return plot_wrapper
+    return plot
