@@ -4,12 +4,6 @@ var paused = false;
 var timeElapsed = 0;
 var timerID = -1;
 
-// go to the analysis settings page
-$("#to-analysis").on("click", function () {
-    stop_analysis();
-    location.href="/";
-});
-
 // set the dimensions for the container
 function set_dims(object, container, factor) {
     var window_dims = [0.95 * $(window).width(), 0.95 * $(window).height()];
@@ -74,7 +68,8 @@ function update_img(url, container, keep_size) {
 // start the analysis
 $("#start-analysis").on("click", function () {
     if (!$(this).hasClass("inactive")) {
-        Sijax.request("analyse", [paused]);
+        var period = parseFloat($("#period").val());
+        sjxComet.request("analyse", [paused, period]);
         $("#start-analysis").addClass("inactive");
         $("#stop-analysis").removeClass("inactive");
         $("#pause-analysis").removeClass("inactive");
@@ -90,11 +85,6 @@ $("#pause-analysis").on("click", function () {
         $("#pause-analysis").addClass("inactive");
     }
 });
-
-// request analyse_routine
-function make_comet_request(data_dir, routine, period) {
-    sjxComet.request("analyse_routine", [data_dir, routine, period]);
-}
 
 // stop the analysis
 function stop_analysis() {
@@ -201,4 +191,20 @@ $("#plot-list").on("click", ".plot-list-routine-title", function () {
 // bring a plot or data table to the front with a double click
 $("#plots-container").on("dblclick", ".plot-container, .table-container", function () {
     $(this).parent().append($(this));
+});
+
+var handle = $("#custom-handle");
+$("#slider").slider({
+    min: -1,
+    max: 2,
+    step: 0.001,
+    create: function() {
+        handle.children().val(Math.pow(10, parseFloat($(this).slider("value"))).toPrecision(3));
+        },
+    slide: function(event, ui) {
+        handle.children().val(Math.pow(10, parseFloat(ui.value)).toPrecision(3));
+    }
+});
+handle.children().on("change", function () {
+    $("#slider").slider("value", Math.log10(parseFloat($(this).val())));
 });

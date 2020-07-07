@@ -84,11 +84,6 @@ hr.main {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-#function-table {
-    display: none;
-    margin-left: auto;
-    margin-right: auto;
-}
 table {
     border-collapse: collapse;
     margin-left: auto;
@@ -109,98 +104,36 @@ p {
 .table-container {
     text-align: center;
 }
-.vl {
-    border-left: 3px double black;
-    height: 100%;
-    left: 50%;
-    margin-left: -3px;
-    position: absolute;
+#custom-handle {
+    width: 4em;
+    height: 2.5em;
+    top: 50%;
+    margin-top: -2em;
+    text-align: center;
 }
-.selection-box {
-    font-size: 16px;
-    border-radius: 16px;
+#period {
     outline: none;
+    width: 3em;
+    border: 1px solid lightgrey;
+    margin: auto;
 }
-.routine-info, .shots-info {
-    display: none;
-}
-.num-box {
-    width: 50px;
-    outline: none;
-}
-.text-box {
-    outline: none;
-}
-#to-plots {
-    position: absolute;
-    top: 20px;
-    right: 5%;
-}
-#to-analysis {
-    position: absolute;
-    top: 20px;
-    left: 5%;
-}
-.page-change {
-    position: absolute;
-    height: 36px;
-    width: 144px;
-    border-radius: 300px;
-    outline: none;
-}
-#shots-choice {
-    width: 200px;
-}
-.analysis-label {
-    margin-left: 10px;
-}
-#oldnew-toggle-container {
-    float: right;
-}
-.switch {
-    position: relative;
+#slider {
     display: inline-block;
-    width: 30px;
-    height: 17px;
-    bottom: 5px;
+    width: 50%;
+    float: right;
+    margin-right: 5%;
+    position: relative;
+    top: 1.5em;
 }
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
+#period::-webkit-outer-spin-button,
+#period::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    -webkit-transition: .2s;
-    transition: .2s;
-    border-radius: 17px;
-}
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 13px;
-    width: 13px;
-    left: 2px;
-    bottom: 2px;
-    background-color: white;
-    -webkit-transition: .2s;
-    transition: .2s;
-    border-radius: 50%;
-}
-#oldnew-toggle:checked + .slider {
-    background-color: #2196F3;
-}
-#oldnew-toggle:focus + .slider {
-    box-shadow: 0 0 0.5px #2196F3;
-}
-#oldnew-toggle:checked + .slider:before {
-    -webkit-transform: translateX(13px);
-    -ms-transform: translateX(13px);
-    transform: translateX(13px);
+
+#period-label {
+    position: relative;
+    float: right;
+    right: 62%;
+    top: 1em;
 }

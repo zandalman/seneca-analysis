@@ -1,24 +1,14 @@
 
 # import libraries
-import sys
 import json
 import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
 import inspect
 import os
-import contextlib
 import importlib
 
-PATH_TO_PLOT_DATA = "./plot_data"
-
-# context manager to prevent standard output
-@contextlib.contextmanager
-def no_stdout():
-    save_stdout = sys.stdout
-    sys.stdout = BytesIO()
-    yield
-    sys.stdout = save_stdout
+PLOT_DATA_PATH = "/Users/zacharyandalman/PycharmProjects/analysis/plot_data/plot_data"
 
 
 def reset_plot_counters():
@@ -29,36 +19,38 @@ def reset_plot_counters():
     for plot_function in plot_functions:
         plot_function.counter = 0
 
-
-def plot(func):
-    def plot_wrapper(*args, **kwargs):
-        plot_wrapper.counter += 1
-        # clear plot
-        plt.clf()
-        with no_stdout():
-            # run plot function
+def plot(interactive=False):
+    def plot_decorator(func):
+        def plot_wrapper(*args, **kwargs):
+            # increment plot counter
+            plot_wrapper.counter += 1
+            # close any open plots
+            plt.close()
             data = func(*args, **kwargs)
-        # annotate plot with routine name and function name
-        frame = inspect.stack()[1]
-        filename = os.path.basename(frame[0].f_code.co_filename)
-        plt.annotate("%s (%s)" % (filename, func.__name__), xy=(0, 0), xycoords='figure fraction')
-        # if function output is dictionary, encode it as a json string
-        if type(data) != dict:
-            data = "{}"
-        else:
-            data = json.dumps(data)
-        # encode plot in base64
-        img = BytesIO()
-        plt.savefig(img)
-        img.seek(0)
-        plot_url = base64.b64encode(img.getvalue()).decode()
-        # write information to standard output
-        output_info = "@@@%s@@@%s@@@%s@@@%s" % (func.__name__, plot_wrapper.counter, plot_url, data)
-        with open(PATH_TO_PLOT_DATA, 'w') as plot_data:
-            plot_data.write(output_info)
-        # set plot_wrapper attribute to display function information in GUI
+            # annotate plot with routine name and function name
+            if interactive:
+                filename = "interactive"
+            else:
+                frame = inspect.stack()[1]
+                filename = os.path.basename(frame[0].f_code.co_filename)
+            plt.annotate("%s (%s)" % (filename, func.__name__), xy=(0, 0), xycoords='figure fraction')
+            # if function output is dictionary, encode it as a json string
+            if type(data) != dict:
+                data = "{}"
+            else:
+                data = json.dumps(data)
+            # encode the plot in base64
+            img = BytesIO()
+            plt.savefig(img)
+            img.seek(0)
+            plot_url = base64.b64encode(img.getvalue()).decode()
+            # write information to standard output
+            output_info = "@@@" + "@@@".join([str(info) for info in [filename, func.__name__, func.__doc__, plot_wrapper.counter, plot_url, data]])
+            with open(PLOT_DATA_PATH, 'w') as plot_data:
+                plot_data.write(output_info)
         plot_wrapper.plot = True
+        # initialize plot counter
         plot_wrapper.counter = 0
         plot_wrapper.__doc__ = func.__doc__
         return plot_wrapper
-    return plot
+    return plot_decorator

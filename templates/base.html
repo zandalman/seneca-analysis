@@ -8,13 +8,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/jquery-ui.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/select2.min.css') }}" rel="stylesheet">
     {% block styles %}{% endblock %}
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/sijax/sijax.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='js/sijax/sijax_upload.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/sijax/sijax_comet.js') }}"></script>
     {% block script1 %}{% endblock %}
     <title>{% block title %}{% endblock %}</title>
