@@ -73,6 +73,7 @@ $("#start-analysis").on("click", function () {
         $("#start-analysis").addClass("inactive");
         $("#stop-analysis").removeClass("inactive");
         $("#pause-analysis").removeClass("inactive");
+        $("#slider").slider("disable");
     }
 });
 
@@ -83,6 +84,7 @@ $("#pause-analysis").on("click", function () {
         Sijax.request("pause_analysis");
         $("#start-analysis").removeClass("inactive");
         $("#pause-analysis").addClass("inactive");
+        $("#slider").slider("enable");
     }
 });
 
@@ -93,6 +95,7 @@ function stop_analysis() {
     $("#start-analysis").removeClass("inactive");
     $("#stop-analysis").addClass("inactive");
     $("#pause-analysis").addClass("inactive");
+    $("#slider").slider("enable");
 }
 
 $("#stop-analysis").on("click", function () {
