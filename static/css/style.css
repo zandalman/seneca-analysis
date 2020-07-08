@@ -141,3 +141,6 @@ p {
     font-size: 32px;
     display: inline-block;
 }
+#custom-handle {
+    cursor: ew-resize;
+}

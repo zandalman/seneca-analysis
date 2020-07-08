@@ -209,3 +209,17 @@ $("#slider").slider({
 handle.children().on("change", function () {
     $("#slider").slider("value", Math.log10(parseFloat($(this).val())));
 });
+
+// highlight an item if hovering in plot list
+$("#plot-list").on("mouseenter mouseleave", ".plot-list-item", function () {
+    var plot_id = $(this).data("id");
+    $("#" + plot_id).toggleClass("highlight");
+});
+
+// highlight all items in routine if hovering in plot list
+$("#plot-list").on("mouseenter mouseleave", ".plot-list-routine-title", function () {
+    $(this).siblings(".plot-list-item").each(function() {
+        var plot_id = $(this).data("id");
+        $("#" + plot_id).toggleClass("highlight");
+    });
+});

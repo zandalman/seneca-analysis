@@ -8,6 +8,12 @@
     border: 2px solid black;
     background-size: cover;
 }
+.plot-container, .table-container {
+    cursor: move;
+}
+.plot-container.highlight, .table-container.highlight {
+    border: 2px solid indianred;
+}
 .plot-list-item, .plot-list-routine-title {
     list-style-type: none;
     word-wrap: break-word;
