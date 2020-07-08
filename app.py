@@ -19,6 +19,8 @@ flask_sijax.Sijax(app)
 
 # set global variables
 PLOT_DATA_PATH = os.path.join(app.root_path, "plot_data", "plot_data")
+INFO_PER_DUMP = 7
+STATIC_INFO_PER_DUMP = 5
 analysis_on = False
 current_plots = []
 
@@ -33,15 +35,15 @@ def analysis_step(obj_response):
         with open(PLOT_DATA_PATH, "r+") as plot_data_file:
             plot_data_list = plot_data_file.read().split("@@@")[1:]
             plot_data_file.truncate(0)
-        plot_data_list = np.reshape(plot_data_list, (int(len(plot_data_list) / 7), 7)).tolist()
+        plot_data_list = np.reshape(plot_data_list, (int(len(plot_data_list) / INFO_PER_DUMP), INFO_PER_DUMP)).tolist()
         plot_data_list = remove_duplicate_plots(plot_data_list)
         for plot_data in plot_data_list:
             plot = dict(type=plot_data[0] ,file=plot_data[1], name=plot_data[2], description=plot_data[3], counter=int(plot_data[4]), url="data:image/png;base64,%s" % plot_data[5], data=json.loads(plot_data[6]))
-            if plot_data[:5] not in current_plots:
+            if plot_data[:STATIC_INFO_PER_DUMP] not in current_plots:
                 if not plot["file"] in [current_plot[1] for current_plot in current_plots]:
                     yield from create_routine(obj_response, plot["file"])
                 yield from create_plot(obj_response, plot)
-                current_plots.append(plot_data[:5])
+                current_plots.append(plot_data[:STATIC_INFO_PER_DUMP])
             else:
                 yield from update_plot(obj_response, plot)
 
