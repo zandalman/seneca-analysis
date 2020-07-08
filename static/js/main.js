@@ -48,6 +48,7 @@ function init_img(url, container) {
 
 // initialize a data table
 function init_table(container) {
+    "use strict";
     $("#" + container).draggable({
         snap: ".plot-container.visible, .table-container.visible",
         containment: "#plots-container"
@@ -57,6 +58,7 @@ function init_table(container) {
 
 // update a plot
 function update_img(url, container, keep_size) {
+    "use strict";
     var factor = keep_size === "true" ? $("#" + container).width() / $("#" + container).data("width"): 1;
     $("<img/>").attr("src", url).on("load", function () {
         set_dims(this, container, factor);
@@ -211,3 +213,7 @@ $("#slider").slider({
 handle.children().on("change", function () {
     $("#slider").slider("value", Math.log10(parseFloat($(this).val())));
 });
+
+function add_plot_list_item(plot_list_selector, plot_list_item_HTML) {
+    $(plot_list_selector).append(plot_list_item_HTML);
+}

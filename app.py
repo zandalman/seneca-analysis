@@ -38,7 +38,7 @@ def analysis_step(obj_response):
         for plot_data in plot_data_list:
             plot = dict(file=plot_data[0], name=plot_data[1], description=plot_data[2], counter=int(plot_data[3]), url="data:image/png;base64,%s" % plot_data[4], data=json.loads(plot_data[5]))
             if plot_data[:4] not in current_plots:
-                if not plot["file"] in [current_plot["file"] for current_plot in current_plots]:
+                if not plot["file"] in [current_plot[0] for current_plot in current_plots]:
                     yield from create_routine(obj_response, plot["file"])
                 yield from create_plot(obj_response, plot)
                 current_plots.append(plot_data[:4])
