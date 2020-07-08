@@ -8,6 +8,7 @@ import numpy as np
 import json
 from plots import *
 
+
 # initialize and configure Flask
 app = Flask(__name__)
 sijax_path = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
@@ -17,6 +18,7 @@ app.config.update(
 )
 flask_sijax.Sijax(app)
 
+
 # set global variables
 PLOT_DATA_PATH = os.path.join(app.root_path, "plot_data", "plot_data")
 INFO_PER_DUMP = 7
@@ -24,11 +26,22 @@ STATIC_INFO_PER_DUMP = 5
 analysis_on = False
 current_plots = []
 
+
 # send a message to an html element
 def report_status(obj_response, container_id, msg):
     obj_response.html_append("#%s" % container_id, "%s<br/>" % msg)
 
 
+# remove duplicate plots
+def remove_duplicate_plots(plot_data_list):
+    plot_data_list_reversed = plot_data_list[::-1]
+    for i in reversed(range(len(plot_data_list))):
+        if plot_data_list_reversed[i][:STATIC_INFO_PER_DUMP] in [plot[:STATIC_INFO_PER_DUMP] for plot in plot_data_list_reversed[:i]]:
+            del plot_data_list_reversed[i]
+    return plot_data_list_reversed[::-1]
+
+
+# do one analysis iteration
 def analysis_step(obj_response):
     global current_plots
     if os.path.getsize(PLOT_DATA_PATH) > 0:
@@ -47,6 +60,7 @@ def analysis_step(obj_response):
             else:
                 yield from update_plot(obj_response, plot)
 
+
 class SijaxHandlers(object):
 
     # stop the analysis
@@ -64,6 +78,7 @@ class SijaxHandlers(object):
         analysis_on = False
         report_status(obj_response, "status", "Analysis paused")
         obj_response.call("stop_timer")
+
 
 class SijaxCometHandlers(object):
 
@@ -90,18 +105,16 @@ class SijaxCometHandlers(object):
             else:
                 report_status(obj_response, "status", "Warning: period is shorter than execution time by %.3g seconds" % (step_time - period))
 
+
 # route the plot page
 @flask_sijax.route(app, '/')
 def main():
 
     if g.sijax.is_sijax_request:
-        # register Sijax handlers
-        g.sijax.register_object(SijaxHandlers)
-        # register Sijax comet handlers
-        g.sijax.register_comet_object(SijaxCometHandlers)
+        g.sijax.register_object(SijaxHandlers) # register Sijax handlers
+        g.sijax.register_comet_object(SijaxCometHandlers) # register Sijax comet handlers
         return g.sijax.process_request()
-    # render template
-    return render_template('main.html')
+    return render_template('main.html') # render template
 
 
 # run the flask app with threads in debug mode
