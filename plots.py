@@ -7,6 +7,11 @@ def create_plot(obj_response, plot):
         obj_response.html_append("#plot-list-%s" % plot["file"].replace(".", "-"), "<li class='plot-list-item invisible' data-id='%s'>%s</li>" % (plot_id, plot["name"]))
         yield obj_response
         obj_response.call("init_img", [plot["url"], plot_id])
+    elif plot["type"] == "image":
+        obj_response.html_append("#plots-container", "<div id='%s' class='plot-container' title='%s' style='display: none;'></div>" % (plot_id, plot["description"]))
+        obj_response.html_append("#plot-list-%s" % plot["file"].replace(".", "-"), "<li class='plot-list-item invisible' data-id='%s'>%s - image</li>" % (plot_id, plot["name"]))
+        yield obj_response
+        obj_response.call("init_img", [plot["url"], plot_id])
     if plot["data"]:
         caption = "<caption>%s (%s)</caption>" % (plot["file"], plot["name"])
         plot_table_body = ""
@@ -21,7 +26,7 @@ def create_plot(obj_response, plot):
 
 # add a routine
 def create_routine(obj_response, routine_name):
-    routine_title_HTML = "<li class='plot-list-routine-title invisible'><b>%s</b></li>" % routine_name.replace(".", "-")
+    routine_title_HTML = "<li class='plot-list-routine-title invisible'><b>%s</b></li>" % routine_name
     obj_response.html_append("#plot-list", "<ul class='plot-list-routine' id='plot-list-%s'>%s</ul>" % (routine_name.replace(".", "-"), routine_title_HTML))
     yield obj_response
 
@@ -29,8 +34,8 @@ def create_routine(obj_response, routine_name):
 # update a plot and associated data table
 def update_plot(obj_response, plot):
     plot_id = "%s-%s-%s" % (plot["file"].replace(".", "-"), plot["name"], plot["counter"])
-    if plot["type"] == "plot":
-        obj_response.call("update_img", [plot["url"], plot_id, "true"])
+    if plot["type"] in ["plot", "image"]:
+        obj_response.call("update_img", [plot["url"], plot_id])
     if plot["data"]:
         caption = "<caption>%s (%s)</caption>" % (plot["file"], plot["name"])
         plot_table_body = ""

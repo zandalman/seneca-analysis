@@ -8,6 +8,9 @@ import os
 
 PLOT_DATA_PATH = "/Users/zacharyandalman/PycharmProjects/analysis/plot_data/plot_data"
 
+def write_data(output_info):
+    with open(PLOT_DATA_PATH, 'w') as plot_data:
+        plot_data.write(output_info)
 
 def plot(interactive=False, multiple=False):
     def plot_decorator(func):
@@ -38,8 +41,7 @@ def plot(interactive=False, multiple=False):
             img.seek(0)
             plot_url = base64.b64encode(img.getvalue()).decode()
             output_info = "@@@" + "@@@".join([str(info) for info in ["plot", filename, func.__name__, func.__doc__, plot_wrapper.counter, plot_url, data]])
-            with open(PLOT_DATA_PATH, 'w') as plot_data:
-                plot_data.write(output_info)
+            write_data(output_info)
         # initialize counter
         plot_wrapper.counter = 0
         plot_wrapper.__doc__ = func.__doc__
@@ -67,10 +69,21 @@ def table(interactive=False, multiple=False):
             else:
                 data = json.dumps(data)
             output_info = "@@@" + "@@@".join([str(info) for info in ["table", filename, func.__name__, func.__doc__, table_wrapper.counter, "", data]])
-            with open(PLOT_DATA_PATH, 'w') as plot_data:
-                plot_data.write(output_info)
+            write_data(output_info)
         # initialize counter
         table_wrapper.counter = 0
         table_wrapper.__doc__ = func.__doc__
         return table_wrapper
     return table_decorator
+
+
+def image(name, path, interactive=False, description=""):
+    if interactive:
+        filename = "interactive"
+    else:
+        frame = inspect.stack()[1]
+        filename = os.path.basename(frame[0].f_code.co_filename)
+    with open(path, "rb") as image_file:
+        image_url = base64.b64encode(image_file.read()).decode()
+    output_info = "@@@" + "@@@".join([str(info) for info in ["image", filename, name, description, 0, image_url, "{}"]])
+    write_data(output_info)

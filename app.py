@@ -37,11 +37,11 @@ def analysis_step(obj_response):
         plot_data_list = remove_duplicate_plots(plot_data_list)
         for plot_data in plot_data_list:
             plot = dict(type=plot_data[0] ,file=plot_data[1], name=plot_data[2], description=plot_data[3], counter=int(plot_data[4]), url="data:image/png;base64,%s" % plot_data[5], data=json.loads(plot_data[6]))
-            if plot_data[:4] not in current_plots:
-                if not plot["file"] in [current_plot[0] for current_plot in current_plots]:
+            if plot_data[:5] not in current_plots:
+                if not plot["file"] in [current_plot[1] for current_plot in current_plots]:
                     yield from create_routine(obj_response, plot["file"])
                 yield from create_plot(obj_response, plot)
-                current_plots.append(plot_data[:4])
+                current_plots.append(plot_data[:5])
             else:
                 yield from update_plot(obj_response, plot)
 
