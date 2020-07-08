@@ -2,10 +2,11 @@
 # create and initialize a plot and associated data table
 def create_plot(obj_response, plot):
     plot_id = "%s-%s-%s" % (plot["file"].replace(".", "-"), plot["name"], plot["counter"])
-    obj_response.html_append("#plots-container", "<div id='%s' class='plot-container' title='%s' style='display: none;'></div>" % (plot_id, plot["description"]))
-    obj_response.html_append("#plot-list-%s" % plot["file"].replace(".", "-"), "<li class='plot-list-item invisible' data-id='%s'>%s</li>" % (plot_id, plot["name"]))
-    yield obj_response
-    obj_response.call("init_img", [plot["url"], plot_id])
+    if plot["type"] == "plot":
+        obj_response.html_append("#plots-container", "<div id='%s' class='plot-container' title='%s' style='display: none;'></div>" % (plot_id, plot["description"]))
+        obj_response.html_append("#plot-list-%s" % plot["file"].replace(".", "-"), "<li class='plot-list-item invisible' data-id='%s'>%s</li>" % (plot_id, plot["name"]))
+        yield obj_response
+        obj_response.call("init_img", [plot["url"], plot_id])
     if plot["data"]:
         caption = "<caption>%s (%s)</caption>" % (plot["file"], plot["name"])
         plot_table_body = ""
@@ -28,7 +29,8 @@ def create_routine(obj_response, routine_name):
 # update a plot and associated data table
 def update_plot(obj_response, plot):
     plot_id = "%s-%s-%s" % (plot["file"].replace(".", "-"), plot["name"], plot["counter"])
-    obj_response.call("update_img", [plot["url"], plot_id, "true"])
+    if plot["type"] == "plot":
+        obj_response.call("update_img", [plot["url"], plot_id, "true"])
     if plot["data"]:
         caption = "<caption>%s (%s)</caption>" % (plot["file"], plot["name"])
         plot_table_body = ""

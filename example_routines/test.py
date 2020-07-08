@@ -25,7 +25,7 @@ def linear_fit(x, y):
 
 if __name__ == "__main__":
     x, y = np.random.random(3).tolist(), np.random.random(3).tolist()
-    for i in range(50):
+    while True:
         x.append(np.random.random(1)[0])
         y.append(np.random.random(1)[0])
         linear_fit(x, y)

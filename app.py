@@ -33,10 +33,10 @@ def analysis_step(obj_response):
         with open(PLOT_DATA_PATH, "r+") as plot_data_file:
             plot_data_list = plot_data_file.read().split("@@@")[1:]
             plot_data_file.truncate(0)
-        plot_data_list = np.reshape(plot_data_list, (int(len(plot_data_list) / 6), 6)).tolist()
+        plot_data_list = np.reshape(plot_data_list, (int(len(plot_data_list) / 7), 7)).tolist()
         plot_data_list = remove_duplicate_plots(plot_data_list)
         for plot_data in plot_data_list:
-            plot = dict(file=plot_data[0], name=plot_data[1], description=plot_data[2], counter=int(plot_data[3]), url="data:image/png;base64,%s" % plot_data[4], data=json.loads(plot_data[5]))
+            plot = dict(type=plot_data[0] ,file=plot_data[1], name=plot_data[2], description=plot_data[3], counter=int(plot_data[4]), url="data:image/png;base64,%s" % plot_data[5], data=json.loads(plot_data[6]))
             if plot_data[:4] not in current_plots:
                 if not plot["file"] in [current_plot[0] for current_plot in current_plots]:
                     yield from create_routine(obj_response, plot["file"])
