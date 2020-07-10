@@ -182,7 +182,7 @@ def table(interactive=False, multiple=False):
     return table_decorator
 
 
-def image(name, path, interactive=False, description=""):
+def send_image(name, path, interactive=False, description=""):
     """
     Send an image to the analysis app.
 
@@ -198,10 +198,9 @@ def image(name, path, interactive=False, description=""):
             path (str): The path to the image file.
             interactive (bool): Set to 'True' if using an interactive Python session.
                 Only one interactive session may be used at a time.
-            description (str): A description of the
+            description (str): A description of the image.
 
         Returns:
-            True: If the image path is valid.
             ValueError: If the image path is invalid.
     """
     # get the name of the file
@@ -216,6 +215,38 @@ def image(name, path, interactive=False, description=""):
             image_url = base64.b64encode(image_file.read()).decode()
         output_info = "@@@" + "@@@".join([str(info) for info in ["image", filename, name, description, 0, image_url, "{}"]])
         write_data(output_info) # write data to PLOT_DATA_PATH
-        return True
     else:
         raise ValueError("'%s' is not a valid file path." % path)
+
+
+def send_table(name, data, interactive=False, description=""):
+    """
+    Send a table to the analysis app.
+
+    The function writes the following information to PLOT_DATA_PATH
+        1. The type of object, in this case "table".
+        2. The name of the file where the function is called.
+        3. The name argument.
+        4. The description argument, if provided.
+        5. The data argument encoded as a json string if the argument is a dictionary.
+
+            Args:
+                name (str): A name to associate with the image in the analysis app.
+                data (dict): The data to send to the analysis app.
+                interactive (bool): Set to 'True' if using an interactive Python session.
+                    Only one interactive session may be used at a time.
+                description (str): A description of the image.
+        """
+    # get the name of the file
+    if interactive:
+        filename = "interactive"
+    else:
+        frame = inspect.stack()[1]
+        filename = os.path.basename(frame[0].f_code.co_filename)
+    # if function output is dictionary, encode it as a json string
+    if type(data) != dict:
+        data = "{}"
+    else:
+        data = json.dumps(data)
+    output_info = "@@@" + "@@@".join([str(info) for info in ["table", filename, name, description, 0, "", data]])
+    write_data(output_info)  # write data to PLOT_DATA_PATH

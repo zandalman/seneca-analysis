@@ -30,4 +30,4 @@ if __name__ == "__main__":
         y.append(np.random.random(1)[0])
         linear_fit(x, y)
         sleep(.1)
-        seneca_analysis.image("me", "/Users/zacharyandalman/Documents/ZLA_ID_Photo.jpg")
+        seneca_analysis.send_image("me", "/Users/zacharyandalman/Documents/ZLA_ID_Photo.jpg")
