@@ -10,7 +10,6 @@ from scipy.optimize import curve_fit
 def line(x, a, b):
     return a * x + b
 
-@seneca_analysis.plot()
 def linear_fit(x, y):
     """linear fit to the data"""
     x_smooth = np.linspace(min(x), max(x), 100)
@@ -29,5 +28,6 @@ if __name__ == "__main__":
         x.append(np.random.random(1)[0])
         y.append(np.random.random(1)[0])
         linear_fit(x, y)
+        seneca_analysis.send_current_plot("linear fit")
         sleep(.1)
         seneca_analysis.send_image("me", "/Users/zacharyandalman/Documents/ZLA_ID_Photo.jpg")
