@@ -40,26 +40,6 @@ def remove_duplicate_plots(plot_data_list):
             del plot_data_list_reversed[i]
     return plot_data_list_reversed[::-1]
 
-class Plot(object):
-
-    def __init__(self, plot_data):
-        self.type = plot_data[0]
-        self.file = plot_data[1]
-        self.name = plot_data[2]
-        self.description = plot_data[3]
-        self.url = "data:image/png;base64,%s" % plot_data[4]
-
-class Table(object):
-
-    def __init__(self, plot_data):
-        self.type = plot_data[0]
-        self.file = plot_data[1]
-        self.name = plot_data[2]
-        self.description = plot_data[3]
-        self.data = json.loads(plot_data[4])
-
-obj_types = {"plot": Plot, "table": Table, "image": Plot}
-
 # do one analysis iteration
 def analysis_step(obj_response):
     global current_plots
@@ -73,11 +53,11 @@ def analysis_step(obj_response):
             plot_obj = obj_types[plot_data[0]](plot_data)
             if plot_data[:STATIC_INFO_PER_DUMP] not in current_plots:
                 if not plot_obj.file in [current_plot[1] for current_plot in current_plots]:
-                    yield from create_routine(obj_response, plot_obj.file)
-                yield from create_plot(obj_response, plot_obj)
+                    yield from plot_obj.create_routine(obj_response)
+                yield from plot_obj.create(obj_response)
                 current_plots.append(plot_data[:STATIC_INFO_PER_DUMP])
             else:
-                yield from update_plot(obj_response, plot_obj)
+                yield from plot_obj.update(obj_response)
 
 
 class SijaxHandlers(object):

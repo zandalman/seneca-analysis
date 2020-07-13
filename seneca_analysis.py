@@ -9,8 +9,8 @@ import os
 
 
 # set global variables
-APP_ROOT_PATH = "/Users/zacharyandalman/PycharmProjects/analysis"
-PLOT_DATA_PATH = os.path.join(APP_ROOT_PATH, "plot_data", "plot_data")
+APP_ROOT_PATH = "/Users/zacharyandalman/PycharmProjects/analysis/plot_data"
+PLOT_DATA_PATH = os.path.join(APP_ROOT_PATH, "plot_data")
 
 
 def write_data(data):
@@ -45,7 +45,6 @@ def send_image(name, path, interactive=False, description=""):
         Returns:
             ValueError: If the image path is invalid.
     """
-    name = name.replace(" ", "-")
     # get the name of the file
     if interactive:
         filename = "interactive"
@@ -80,7 +79,6 @@ def send_table(name, data, interactive=False, description=""):
                     Only one interactive session may be used at a time.
                 description (str): A description of the image.
         """
-    name = name.replace(" ", "-")
     # get the name of the file
     if interactive:
         filename = "interactive"
@@ -113,7 +111,6 @@ def send_current_plot(name, interactive=False, description=""):
             Only one interactive session may be used at a time.
         description (str): A description of the image.
     """
-    name = name.replace(" ", "-")
     # get the name of the file
     if interactive:
         filename = "interactive"
@@ -129,3 +126,6 @@ def send_current_plot(name, interactive=False, description=""):
     output_info = "@@@" + "@@@".join([str(info) for info in ["plot", filename, name, description, plot_url]])
     write_data(output_info)  # write data to PLOT_DATA_PATH
     plt.clf()
+
+
+#def analysis_complete():
