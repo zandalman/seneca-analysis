@@ -9,28 +9,38 @@ import os
 
 
 # set global variables
-APP_ROOT_PATH = "/Users/zacharyandalman/PycharmProjects/analysis"
-PLOT_DATA_PATH = os.path.join(APP_ROOT_PATH, "plot_data")
+app_root_path = ""
+interactive = False
+
+
+def get_app_root_path():
+    global app_root_path
+    if not app_root_path:
+        raise OSError("App root path not configured. Try 'seneca_analysis.app_root_path = APP_ROOT_PATH'")
+    elif not os.path.exists(app_root_path):
+        raise OSError("App root path is not a valid path.")
+    else:
+        return app_root_path
 
 
 def write_data(data, filename):
     """
-    Write data to PLOT_DATA_PATH.
+    Write data to the plot data path.
 
     Args:
         data (str): Data to write
         filename (str): Name of file to write to
     """
-    full_path = os.path.join(PLOT_DATA_PATH, filename)
+    full_path = os.path.join(get_app_root_path(), "plot_data", filename)
     with open(full_path, 'a+') as plot_data:
         plot_data.write(data)
 
 
-def send_image(name, path, interactive=False, description=""):
+def send_image(name, path, description=""):
     """
     Send an image to the analysis app.
 
-    The function writes the following information to PLOT_DATA_PATH
+    The function writes the following information to the plot data path
         1. The type of object, in this case "image".
         2. The name of the file where the function is called.
         3. The name argument.
@@ -40,13 +50,12 @@ def send_image(name, path, interactive=False, description=""):
         Args:
             name (str): A name to associate with the image in the analysis app.
             path (str): The path to the image file.
-            interactive (bool): Set to 'True' if using an interactive Python session.
-                Only one interactive session may be used at a time.
             description (str): A description of the image.
 
         Returns:
             ValueError: If the image path is invalid.
     """
+    global interactive
     # get the name of the file
     if interactive:
         filename = "interactive"
@@ -58,16 +67,16 @@ def send_image(name, path, interactive=False, description=""):
         with open(path, "rb") as image_file:
             image_url = base64.b64encode(image_file.read()).decode()
         output_info = "@@@" + "@@@".join([str(info) for info in ["image", filename, name, description, image_url]])
-        write_data(output_info, filename) # write data to PLOT_DATA_PATH
+        write_data(output_info, filename) # write data to the plot data path
     else:
-        raise ValueError("'%s' is not a valid file path." % path)
+        raise FileNotFoundError("'%s' is not a valid file path." % path)
 
 
-def send_table(name, data, interactive=False, description=""):
+def send_table(name, data, description=""):
     """
     Send a table to the analysis app.
 
-    The function writes the following information to PLOT_DATA_PATH
+    The function writes the following information to the plot data path
         1. The type of object, in this case "table".
         2. The name of the file where the function is called.
         3. The name argument.
@@ -77,10 +86,9 @@ def send_table(name, data, interactive=False, description=""):
             Args:
                 name (str): A name to associate with the image in the analysis app.
                 data (dict): The data to send to the analysis app.
-                interactive (bool): Set to 'True' if using an interactive Python session.
-                    Only one interactive session may be used at a time.
                 description (str): A description of the image.
         """
+    global interactive
     # get the name of the file
     if interactive:
         filename = "interactive"
@@ -96,11 +104,11 @@ def send_table(name, data, interactive=False, description=""):
     write_data(output_info, filename)  # write data to PLOT_DATA_PATH
 
 
-def send_current_plot(name, interactive=False, description=""):
+def send_current_plot(name, description=""):
     """
     Send the current matplotlib plot to the analysis app.
 
-    The function writes the following information to PLOT_DATA_PATH
+    The function writes the following information to the plot data path
         1. The type of object, in this case "plot".
         2. The name of the file where the function is called.
         3. The name argument.
@@ -109,10 +117,9 @@ def send_current_plot(name, interactive=False, description=""):
 
     Args:
         name (str): A name to associate with the image in the analysis app.
-        interactive (bool): Set to 'True' if using an interactive Python session.
-            Only one interactive session may be used at a time.
         description (str): A description of the image.
     """
+    global interactive
     # get the name of the file
     if interactive:
         filename = "interactive"
@@ -126,16 +133,17 @@ def send_current_plot(name, interactive=False, description=""):
     img.seek(0)
     plot_url = base64.b64encode(img.getvalue()).decode()
     output_info = "@@@" + "@@@".join([str(info) for info in ["plot", filename, name, description, plot_url]])
-    write_data(output_info, filename)  # write data to PLOT_DATA_PATH
+    write_data(output_info, filename)  # write data to the plot data path
     plt.clf()
 
 
-def end_loop(interactive=False):
+def end_loop():
+    global interactive
     # get the name of the file
     if interactive:
         filename = "interactive"
     else:
         frame = inspect.stack()[1]
         filename = os.path.splitext(os.path.basename(frame[0].f_code.co_filename))[0]
-    with open(os.path.join(PLOT_DATA_PATH, filename), 'w') as plot_data:
+    with open(os.path.join(get_app_root_path(), "plot_data", filename), 'w') as plot_data:
         plot_data.close()

@@ -7,6 +7,8 @@ import numpy as np
 from time import sleep
 from scipy.optimize import curve_fit
 
+seneca_analysis.app_root_path = "/Users/zacharyandalman/PycharmProjects/analysis"
+
 def line(x, a, b):
     return a * x + b
 
