@@ -5,7 +5,6 @@ import flask_sijax
 import os
 import time
 import numpy as np
-import json
 from plots import *
 
 
@@ -20,7 +19,7 @@ flask_sijax.Sijax(app)
 
 
 # set global variables
-PLOT_DATA_PATH = os.path.join(app.root_path, "plot_data", "plot_data")
+PLOT_DATA_PATH = os.path.join(app.root_path, "plot_data")
 INFO_PER_DUMP = 5
 STATIC_INFO_PER_DUMP = 4
 analysis_on = False
@@ -43,21 +42,22 @@ def remove_duplicate_plots(plot_data_list):
 # do one analysis iteration
 def analysis_step(obj_response):
     global current_plots
-    if os.path.getsize(PLOT_DATA_PATH) > 0:
-        with open(PLOT_DATA_PATH, "r+") as plot_data_file:
-            plot_data_list = plot_data_file.read().split("@@@")[1:]
-            plot_data_file.truncate(0)
-        plot_data_list = np.reshape(plot_data_list, (int(len(plot_data_list) / INFO_PER_DUMP), INFO_PER_DUMP)).tolist()
-        plot_data_list = remove_duplicate_plots(plot_data_list)
-        for plot_data in plot_data_list:
-            plot_obj = obj_types[plot_data[0]](plot_data)
-            if plot_data[:STATIC_INFO_PER_DUMP] not in current_plots:
-                if not plot_obj.file in [current_plot[1] for current_plot in current_plots]:
-                    yield from plot_obj.create_routine(obj_response)
-                yield from plot_obj.create(obj_response)
-                current_plots.append(plot_data[:STATIC_INFO_PER_DUMP])
-            else:
-                yield from plot_obj.update(obj_response)
+    for plot_data_file in os.listdir(PLOT_DATA_PATH):
+        plot_data_file_path = os.path.join(PLOT_DATA_PATH, plot_data_file)
+        if os.path.getsize(plot_data_file_path) > 0:
+            with open(plot_data_file_path, "r") as plot_data_file:
+                plot_data_list = plot_data_file.read().split("@@@")[1:]
+            plot_data_list = np.reshape(plot_data_list, (int(len(plot_data_list) / INFO_PER_DUMP), INFO_PER_DUMP)).tolist()
+            plot_data_list = remove_duplicate_plots(plot_data_list)
+            for plot_data in plot_data_list:
+                plot_obj = obj_types[plot_data[0]](plot_data)
+                if plot_data[:STATIC_INFO_PER_DUMP] not in current_plots:
+                    if not plot_obj.file in [current_plot[1] for current_plot in current_plots]:
+                        yield from plot_obj.create_routine(obj_response)
+                    yield from plot_obj.create(obj_response)
+                    current_plots.append(plot_data[:STATIC_INFO_PER_DUMP])
+                else:
+                    yield from plot_obj.update(obj_response)
 
 class SijaxHandlers(object):
 
@@ -76,7 +76,6 @@ class SijaxHandlers(object):
         analysis_on = False
         report_status(obj_response, "status", "Analysis paused")
         obj_response.call("stop_timer")
-        print(current_plots)
 
 
 class SijaxCometHandlers(object):
@@ -92,6 +91,8 @@ class SijaxCometHandlers(object):
             report_status(obj_response, "status", "Analysis started")
             remove_plots(obj_response)
             current_plots = []
+            for plot_data_file in os.listdir(PLOT_DATA_PATH):
+                os.remove(os.path.join(PLOT_DATA_PATH, plot_data_file))
         # start the timer
         obj_response.call("start_timer")
         yield obj_response

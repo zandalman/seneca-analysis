@@ -32,3 +32,4 @@ if __name__ == "__main__":
         seneca_analysis.send_table("fit parameters", data)
         seneca_analysis.send_image("me", "/Users/zacharyandalman/Documents/ZLA_ID_Photo.jpg")
         sleep(.1)
+        seneca_analysis.end_loop()
