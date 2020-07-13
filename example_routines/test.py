@@ -20,14 +20,15 @@ def linear_fit(x, y):
     plt.xlabel("x")
     plt.ylabel("y")
     uncertainty = np.sqrt(np.diag(pcov))
-    return dict(a=popt[0], a_=uncertainty[0], b=popt[1], b_=uncertainty[1])
+    return dict(a=round(popt[0], 3), a_=round(uncertainty[0], 3), b=round(popt[1], 3), b_=round(uncertainty[1], 3))
 
 if __name__ == "__main__":
     x, y = np.random.random(3).tolist(), np.random.random(3).tolist()
     while True:
         x.append(np.random.random(1)[0])
         y.append(np.random.random(1)[0])
-        linear_fit(x, y)
+        data = linear_fit(x, y)
         seneca_analysis.send_current_plot("linear fit")
-        sleep(.1)
+        seneca_analysis.send_table("fit parameters", data)
         seneca_analysis.send_image("me", "/Users/zacharyandalman/Documents/ZLA_ID_Photo.jpg")
+        sleep(.1)

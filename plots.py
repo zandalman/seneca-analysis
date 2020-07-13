@@ -2,7 +2,7 @@
 import json, html
 
 def html_sanitize(string):
-    invalid_chars = ["~", "!", "@", "$", "%", "^", "&", "*", "(", ")", "+", "=", ",", ".", "/", "'", ";", ":", '"', "?", ">", "<", "[", "]", "\\", "{", "}", "|", "`", "#"]
+    invalid_chars = ["~", "!", "@", "$", "%", "^", "&", "*", "(", ")", "+", "=", ",", ".", "/", "'", ";", ":", '"', "?", ">", "<", "[", "]", "\\", "{", "}", "|", "`", "#", " "]
     for char in invalid_chars:
         string = string.replace(char, "-")
     return string
@@ -29,7 +29,7 @@ class Data(object):
 class Plot(Data):
 
     def __init__(self, plot_data):
-        super.__init__(plot_data)
+        super().__init__(plot_data)
         self.url = "data:image/png;base64,%s" % plot_data[4]
 
     def create(self, obj_response):
@@ -46,14 +46,14 @@ class Plot(Data):
 class Table(Data):
 
     def __init__(self, plot_data):
-        super.__init__(plot_data)
+        super().__init__(plot_data)
         self.data = json.loads(plot_data[4])
         self.caption = caption = "<caption>%s (%s)</caption>" % (html.escape(self.name), html.escape(self.file))
 
     def generate_table_HTML(self):
         table_body_HTML = ""
         for param in sorted(self.data.keys()):
-            table_body_HTML += "<tr><th>%s</th><td>%s</td></tr>" % (html.escape(param), html.escape(self.data[param]))
+            table_body_HTML += "<tr><th>%s</th><td>%s</td></tr>" % (html.escape(str(param)), html.escape(str(self.data[param])))
         table_HTML = "<table>%s<tbody>%s</tbody></table>" % (self.caption, table_body_HTML)
         return table_HTML
 

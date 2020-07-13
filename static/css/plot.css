@@ -5,11 +5,11 @@
     margin: 0 auto;
 }
 .plot-container {
-    border: 2px solid black;
     background-size: cover;
 }
 .plot-container, .table-container {
     cursor: move;
+    border: 2px solid black;
 }
 .plot-container.highlight, .table-container.highlight {
     border: 2px solid indianred;

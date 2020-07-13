@@ -59,7 +59,6 @@ def analysis_step(obj_response):
             else:
                 yield from plot_obj.update(obj_response)
 
-
 class SijaxHandlers(object):
 
     # stop the analysis
@@ -77,6 +76,7 @@ class SijaxHandlers(object):
         analysis_on = False
         report_status(obj_response, "status", "Analysis paused")
         obj_response.call("stop_timer")
+        print(current_plots)
 
 
 class SijaxCometHandlers(object):
