@@ -69,5 +69,6 @@ class Table(Data):
         obj_response.call("init_table", ["%s-table" % self.id])
         yield obj_response
 
+
 obj_types = {"plot": Plot, "table": Table, "image": Plot}
 

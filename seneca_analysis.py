@@ -13,12 +13,67 @@ app_root_path = ""
 interactive = False
 
 
+def end_loop():
+    global interactive
+    # get the name of the file
+    if interactive:
+        filename = "interactive"
+    else:
+        frame = inspect.stack()[1]
+        filename = os.path.splitext(os.path.basename(frame[0].f_code.co_filename))[0]
+    with open(os.path.join(get_app_root_path(), "plot_data", filename), 'w') as plot_data:
+        plot_data.close()
+
+
+def send_message(message):
+    global interactive
+    # get the name of the file
+    if interactive:
+        filename = "interactive"
+    else:
+        frame = inspect.stack()[1]
+        filename = os.path.splitext(os.path.basename(frame[0].f_code.co_filename))[0]
+    output_info = "@@@" + "@@@".join([str(info) for info in ["message", filename, "", "", message]])
+    write_data(output_info, filename)  # write data to the plot data path
+    with open(os.path.join(get_app_root_path(), "plot_data", filename), 'w') as plot_data:
+        plot_data.close()
+
+
+def analysis_complete():
+    global interactive
+    # get the name of the file
+    if interactive:
+        filename = "interactive"
+    else:
+        frame = inspect.stack()[1]
+        filename = os.path.splitext(os.path.basename(frame[0].f_code.co_filename))[0]
+    output_info = "@@@" + "@@@".join([str(info) for info in ["message", filename, "", "", "Analysis complete!"]])
+    write_data(output_info, filename)  # write data to the plot data path
+
+
+
 def get_app_root_path():
+    """
+    Get the app root path
+
+    Return:
+        OSError: If app root path has not been configured
+            or the configured app root path doesn't exist
+            or the configured app root path does not contain a 'plot_data' directory
+    """
     global app_root_path
     if not app_root_path:
-        raise OSError("App root path not configured. Try 'seneca_analysis.app_root_path = APP_ROOT_PATH'")
+        message = "App root path not configured. Try 'seneca_analysis.app_root_path = APP_ROOT_PATH'"
+        send_message(message)
+        raise OSError(message)
     elif not os.path.exists(app_root_path):
-        raise OSError("App root path is not a valid path.")
+        message = "App root path '%s' is not a valid path." % app_root_path
+        send_message(message)
+        raise OSError(message)
+    elif "plot_data" not in os.listdir(app_root_path):
+        message = "App root path '%s' does not contain 'plot_data' directory. Check that the app root path has been configured properly." % app_root_path
+        send_message(message)
+        raise OSError(message)
     else:
         return app_root_path
 
@@ -135,15 +190,3 @@ def send_current_plot(name, description=""):
     output_info = "@@@" + "@@@".join([str(info) for info in ["plot", filename, name, description, plot_url]])
     write_data(output_info, filename)  # write data to the plot data path
     plt.clf()
-
-
-def end_loop():
-    global interactive
-    # get the name of the file
-    if interactive:
-        filename = "interactive"
-    else:
-        frame = inspect.stack()[1]
-        filename = os.path.splitext(os.path.basename(frame[0].f_code.co_filename))[0]
-    with open(os.path.join(get_app_root_path(), "plot_data", filename), 'w') as plot_data:
-        plot_data.close()

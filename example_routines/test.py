@@ -26,7 +26,7 @@ def linear_fit(x, y):
 
 if __name__ == "__main__":
     x, y = np.random.random(3).tolist(), np.random.random(3).tolist()
-    while True:
+    for i in range(100):
         x.append(np.random.random(1)[0])
         y.append(np.random.random(1)[0])
         data = linear_fit(x, y)
@@ -35,3 +35,4 @@ if __name__ == "__main__":
         seneca_analysis.send_image("me", "/Users/zacharyandalman/Documents/ZLA_ID_Photo.jpg")
         sleep(.1)
         seneca_analysis.end_loop()
+    seneca_analysis.send_message("analysis complete!")

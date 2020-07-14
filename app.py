@@ -50,14 +50,18 @@ def analysis_step(obj_response):
             plot_data_list = np.reshape(plot_data_list, (int(len(plot_data_list) / INFO_PER_DUMP), INFO_PER_DUMP)).tolist()
             plot_data_list = remove_duplicate_plots(plot_data_list)
             for plot_data in plot_data_list:
-                plot_obj = obj_types[plot_data[0]](plot_data)
-                if plot_data[:STATIC_INFO_PER_DUMP] not in current_plots:
-                    if not plot_obj.file in [current_plot[1] for current_plot in current_plots]:
-                        yield from plot_obj.create_routine(obj_response)
-                    yield from plot_obj.create(obj_response)
-                    current_plots.append(plot_data[:STATIC_INFO_PER_DUMP])
+                if plot_data[0] == "message":
+                    report_status(obj_response, "status", "%s: %s" % (plot_data[1], plot_data[4]))
+                    yield obj_response
                 else:
-                    yield from plot_obj.update(obj_response)
+                    plot_obj = obj_types[plot_data[0]](plot_data)
+                    if plot_data[:STATIC_INFO_PER_DUMP] not in current_plots:
+                        if not plot_obj.file in [current_plot[1] for current_plot in current_plots]:
+                            yield from plot_obj.create_routine(obj_response)
+                        yield from plot_obj.create(obj_response)
+                        current_plots.append(plot_data[:STATIC_INFO_PER_DUMP])
+                    else:
+                        yield from plot_obj.update(obj_response)
 
 class SijaxHandlers(object):
 
