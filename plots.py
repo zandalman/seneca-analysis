@@ -14,11 +14,11 @@ def remove_plots(obj_response):
 class Data(object):
 
     def __init__(self, data):
-        self.type = data[0]
-        self.file = data[1]
-        self.name = data[2]
-        self.description = data[3]
-        self.id = html_sanitize("-".join(data[:3]))
+        self.type = data["type"]
+        self.file = data["file"]
+        self.name = data["name"]
+        self.description = data["description"]
+        self.id = html_sanitize("-".join([data["type"], data["file"], data["name"]]))
 
     def create_routine(self, obj_response):
         routine_title_HTML = "<li class='plot-list-routine-title invisible'><b>%s</b></li>" % html.escape(self.file)
@@ -30,7 +30,7 @@ class Plot(Data):
 
     def __init__(self, plot_data):
         super().__init__(plot_data)
-        self.url = "data:image/png;base64,%s" % plot_data[4]
+        self.url = "data:image/png;base64,%s" % plot_data["url"]
 
     def create(self, obj_response):
         obj_response.html_append("#plots-container", "<div id='%s' class='plot-container' title='%s' style='display: none;'></div>" % (self.id, self.description))
@@ -47,7 +47,7 @@ class Table(Data):
 
     def __init__(self, plot_data):
         super().__init__(plot_data)
-        self.data = json.loads(plot_data[4])
+        self.data = json.loads(plot_data["data"])
         self.caption = caption = "<caption>%s (%s)</caption>" % (html.escape(self.name), html.escape(self.file))
 
     def generate_table_HTML(self):

@@ -25,14 +25,15 @@ def linear_fit(x, y):
     return dict(a=round(popt[0], 3), a_=round(uncertainty[0], 3), b=round(popt[1], 3), b_=round(uncertainty[1], 3))
 
 if __name__ == "__main__":
+    analysis = seneca_analysis.Analysis()
     x, y = np.random.random(3).tolist(), np.random.random(3).tolist()
     for i in range(100):
         x.append(np.random.random(1)[0])
         y.append(np.random.random(1)[0])
         data = linear_fit(x, y)
-        seneca_analysis.send_current_plot("linear fit")
-        seneca_analysis.send_table("fit parameters", data)
-        seneca_analysis.send_image("me", "/Users/zacharyandalman/Documents/ZLA_ID_Photo.jpg")
+        analysis.plot("linear fit")
+        analysis.table("fit parameters", data)
+        analysis.image("me", "/Users/zacharyandalman/Documents/ZLA_ID_Photo.jpg")
         sleep(.1)
-        seneca_analysis.end_loop()
-    seneca_analysis.send_message("analysis complete!")
+        analysis.send()
+    analysis.end()
