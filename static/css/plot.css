@@ -1,8 +1,14 @@
-#plots-container {
-    width: 95%;
+#plots-container-parent {
+    width: 98%;
     height: 2000px;
-    background: beige;
     margin: 0 auto;
+    background: beige;
+    position: relative;
+}
+#plots-container {
+    width: 100%;
+    height: 100%;
+    background: transparent;
 }
 .plot-container {
     background-size: cover;
@@ -10,6 +16,8 @@
 .plot-container, .table-container {
     cursor: move;
     border: 2px solid black;
+    float: left;
+    margin: 2px;
 }
 .plot-container.highlight, .table-container.highlight {
     border: 2px solid indianred;

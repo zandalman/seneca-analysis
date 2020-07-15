@@ -3,25 +3,18 @@
 var paused = false;
 var timeElapsed = 0;
 var timerID = -1;
+var max_dims = [0.5 * $(document).width(), 0.5 * $(document).height()];
 
 // set the dimensions
 function set_dims(width, height, selector) {
-    var max_dims = [0.5 * $(document).width(), 0.5 * $(document).height()];
-    if (width > max_dims[0]) {
-        selector.css("width", max_dims[0]);
-        selector.css("height", max_dims[0] * height / width);
-    } else if (height > max_dims[1]) {
-        selector.css("width", max_dims[1] * width / height);
-        selector.css("height", max_dims[1]);
-    } else {
-        selector.css("width", width);
-        selector.css("height", height);
-    }
+    var ratio = Math.min(max_dims[0] / width, max_dims[1] / height, 1);
+    selector.width(width * ratio);
+    selector.height(height * ratio);
 }
 
 // initialize a plot
 function init_img(url, container) {
-    var max_dims = [0.5 * $(document).width(), 0.5 * $(document).height()];
+
     var selector = $("#" + container);
     $("<img/>").attr("src", url).on("load", function () {
         set_dims(this.width, this.height, selector)
@@ -198,7 +191,7 @@ $("#slider").slider({
     max: 2,
     step: 0.001,
     create: function() {
-        handle.children().val(Math.pow(10, parseFloat($(this).slider("value"))).toPrecision(3));
+        handle.children().val(Math.pow(10, parseFloat($("#slider").slider("value"))).toPrecision(3));
         },
     slide: function(event, ui) {
         handle.children().val(Math.pow(10, parseFloat(ui.value)).toPrecision(3));
@@ -208,6 +201,27 @@ $("#slider").slider({
 // change slider value on handle change
 handle.children().on("change", function () {
     $("#slider").slider("value", Math.log10(parseFloat($(this).val())));
+});
+
+$("#slider-grid").slider({
+    orientation: "vertical",
+    min: 30,
+    max: Math.min(max_dims[0], max_dims[1]),
+    step: 1,
+    create: function() {
+        $("#grid-size").val(30);
+        },
+    slide: function(event, ui) {
+        $("#grid-size").val(ui.value);
+        if ($("#toggle-grid").hasClass("on")) {
+            1+1;
+        }
+    }
+});
+
+// change slider value on handle change
+$("#grid-size").on("change", function () {
+    $("#slider-grid").slider("value", $(this).val());
 });
 
 // highlight an item if hovering in plot list
@@ -222,4 +236,32 @@ $("#plot-list").on("mouseenter mouseleave", ".plot-list-routine-title", function
         var plot_id = $(this).data("id");
         $("#" + plot_id).toggleClass("highlight");
     });
+});
+
+
+$("#toggle-grid").on("click", function () {
+    $(this).toggleClass("on");
+    var grid_on = $(this).hasClass("on");
+    var all_containers = $(".plot-container, .table-container");
+    if (grid_on) {
+        $(this).text("grid_on");
+        all_containers.draggable("destroy");
+        $("#plots-container").sortable();
+        all_containers.css("position", "initial");
+        all_containers.css("top", "initial");
+        all_containers.css("left", "initial");
+    } else {
+        $(this).text("grid_off");
+        all_containers.each(function () {
+            var pos = $(this).position();
+            $(this).css("top", pos.top);
+            $(this).css("left", pos.left);
+        });
+        $("#plots-container").sortable("destroy");
+        all_containers.draggable({
+            snap: ".plot-container.visible, .table-container.visible",
+            containment: "#plots-container"
+        });
+        all_containers.css("position", "absolute");
+    }
 });

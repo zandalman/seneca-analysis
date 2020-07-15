@@ -35,7 +35,10 @@ def analysis_step(obj_response):
     for plot_data_file in os.listdir(PLOT_DATA_PATH):
         plot_data_file_path = os.path.join(PLOT_DATA_PATH, plot_data_file)
         if os.path.getsize(plot_data_file_path) > 0:
-            plot_data_list = np.load(plot_data_file_path, allow_pickle=True)
+            try:
+                plot_data_list = np.load(plot_data_file_path, allow_pickle=True)
+            except OSError:
+                break
             for plot_data in plot_data_list:
                 if plot_data["type"] == "message":
                     report_status(obj_response, "status", "'%s': %s" % (plot_data["file"], plot_data["message"]))
