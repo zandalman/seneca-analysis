@@ -29,7 +29,7 @@ class Analysis(object):
         """
         Get the app root path
 
-        Return:
+        Returns:
             OSError: If app root path has not been configured
                 or the configured app root path doesn't exist
                 or the configured app root path does not contain a 'plot_data' directory.

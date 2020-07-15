@@ -24,8 +24,8 @@ analysis_on = False
 current_plots = []
 
 
-# send a message to an html element
 def report_status(obj_response, container_id, msg):
+    """Send a message to an HTML element."""
     obj_response.html_append("#%s" % container_id, "%s<br/>" % html.escape(msg))
 
 
@@ -34,9 +34,9 @@ def analysis_step(obj_response):
     global current_plots
     for plot_data_file in os.listdir(PLOT_DATA_PATH):
         plot_data_file_path = os.path.join(PLOT_DATA_PATH, plot_data_file)
-        if os.path.getsize(plot_data_file_path) > 0:
+        if os.path.getsize(plot_data_file_path) > 0: # ignore empty files
             try:
-                plot_data_list = np.load(plot_data_file_path, allow_pickle=True)
+                plot_data_list = np.load(plot_data_file_path, allow_pickle=True) # load the data
             except Exception:
                 break
             for plot_data in plot_data_list:
@@ -50,7 +50,7 @@ def analysis_step(obj_response):
                 else:
                     obj = obj_types[plot_data["type"]](plot_data)
                     if obj.id not in [plot["id"] for plot in current_plots]:
-                        if not obj.file in [plot["file"] for plot in current_plots]:
+                        if not obj.file in [plot["file"] for plot in current_plots]: # Check if data is from a new routine
                             report_status(obj_response, "status", "Receiving data from '%s'." % obj.file)
                             yield from obj.create_routine(obj_response)
                         yield from obj.create(obj_response)
@@ -60,17 +60,17 @@ def analysis_step(obj_response):
 
 class SijaxHandlers(object):
 
-    # stop the analysis
     @staticmethod
     def stop_analysis(obj_response):
+        """Stop the analysis."""
         global analysis_on
         analysis_on = False
         report_status(obj_response, "status", "Analysis stopped")
         obj_response.call("reset_timer")
 
-    # pause the analysis
     @staticmethod
     def pause_analysis(obj_response):
+        """Pause the analysis."""
         global analysis_on
         analysis_on = False
         report_status(obj_response, "status", "Analysis paused")
@@ -79,9 +79,9 @@ class SijaxHandlers(object):
 
 class SijaxCometHandlers(object):
 
-    # start the analysis
     @staticmethod
     def analyse(obj_response, paused, period):
+        """Start the analysis."""
         global analysis_on, current_plots
         analysis_on = True
         if paused:
@@ -92,8 +92,7 @@ class SijaxCometHandlers(object):
             current_plots = []
             for plot_data_file in os.listdir(PLOT_DATA_PATH):
                 os.remove(os.path.join(PLOT_DATA_PATH, plot_data_file))
-        # start the timer
-        obj_response.call("start_timer")
+        obj_response.call("start_timer") # start the timer
         yield obj_response
         give_warning = True
         while analysis_on:
@@ -103,21 +102,19 @@ class SijaxCometHandlers(object):
             if period > step_time:
                 time.sleep(period - step_time)
             else:
-                if give_warning:
+                if give_warning: # Check if warning has already been given for this routine
                     report_status(obj_response, "status", "Warning: Period is shorter than execution time by %.3g seconds" % (step_time - period))
                     give_warning = False
 
 
-# route the plot page
 @flask_sijax.route(app, '/')
 def main():
-
+    """Generate the main page."""
     if g.sijax.is_sijax_request:
-        g.sijax.register_object(SijaxHandlers) # register Sijax handlers
-        g.sijax.register_comet_object(SijaxCometHandlers) # register Sijax comet handlers
+        g.sijax.register_object(SijaxHandlers) # Register Sijax handlers
+        g.sijax.register_comet_object(SijaxCometHandlers) # Register Sijax comet handlers
         return g.sijax.process_request()
-    return render_template('main.html') # render template
+    return render_template('main.html') # Render template
 
 
-# run the flask app with threads in debug mode
-app.run(threaded=True, debug=True)
+app.run(threaded=True, debug=True) # run the flask app with threads in debug mode

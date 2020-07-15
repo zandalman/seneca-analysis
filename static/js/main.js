@@ -7,10 +7,10 @@ $(document).ready(function () {
 });
 
 // initialize global variables
-var paused = false;
-var timeElapsed = 0;
+var paused = false; // whether analysis was just paused
+var timeElapsed = 0; // time elapsed on timer
 var timerID = -1;
-var max_dims = [0.5 * $(document).width(), 0.5 * $(document).height()];
+var max_dims = [0.5 * $(document).width(), 0.5 * $(document).height()]; // maximum plot size
 
 // set the dimensions
 function set_dims(width, height, selector) {
@@ -19,6 +19,7 @@ function set_dims(width, height, selector) {
     selector.height(height * ratio);
 }
 
+// enable grid for a plot
 function grid_on(selector) {
     selector.draggable("disable");
     selector.css("position", "initial");
@@ -26,6 +27,7 @@ function grid_on(selector) {
     selector.css("left", "initial");
 }
 
+// disable grid for a plot
 function grid_off(selector) {
     selector.each(function () {
         var pos = $(this).position();
@@ -88,6 +90,7 @@ function init_table(container) {
     }
 }
 
+// update a plot
 function update_img(url, container) {
     var current_width = $("#" + container).width();
     var selector = $("#" + container);
@@ -178,7 +181,7 @@ function reset_timer() {
     timeElapsed = -0.01;
 }
 
-// toggle visibility for plots and data tables
+// toggle visibility for plots
 $("#plot-list").on("click", ".plot-list-item", function () {
     var plot_id = $(this).data("id");
     var plot_selector = $("#" + plot_id);
@@ -202,7 +205,7 @@ $("#plot-list").on("click", ".plot-list-item", function () {
     update_grid_slider();
 });
 
-// toggle visibility for all plots and data tables from a routine
+// toggle visibility for all plots from a routine
 $("#plot-list").on("click", ".plot-list-routine-title", function () {
     var invisible = $(this).hasClass("invisible");
     $(this).siblings(".plot-list-item").each(function() {
@@ -211,7 +214,6 @@ $("#plot-list").on("click", ".plot-list-routine-title", function () {
             $("#" + plot_id).show();
             $(this).removeClass("invisible");
             $(this).addClass("visible");
-            update_grid_slider();
         } else {
             $("#" + plot_id).hide();
             $(this).removeClass("visible");
@@ -220,14 +222,15 @@ $("#plot-list").on("click", ".plot-list-routine-title", function () {
     });
     $(this).toggleClass("visible");
     $(this).toggleClass("invisible");
+    update_grid_slider();
 });
 
-// bring to the front with a double click
+// bring plot to front with a double click
 $("#plots-container").on("dblclick", ".plot-container, .table-container", function () {
     $(this).parent().append($(this));
 });
 
-// create period handle
+// period slider
 var handle = $("#custom-handle");
 $("#slider").slider({
     min: -1,
@@ -246,6 +249,7 @@ handle.children().on("change", function () {
     $("#slider").slider("value", Math.log10(parseFloat($(this).val())));
 });
 
+// grid slider
 $("#slider-grid").slider({
     orientation: "vertical",
     min: 30,
@@ -261,6 +265,7 @@ $("#slider-grid").slider({
     }
 });
 
+// update grid slider value
 function update_grid_slider() {
     var num = $(".plot-container.visible").length;
     if (num === 0) {
@@ -274,13 +279,13 @@ function update_grid_slider() {
     }
 }
 
-// highlight an item if hovering in plot list
+// highlight corresponding plot if hovering over item in plot list
 $("#plot-list").on("mouseenter mouseleave", ".plot-list-item", function () {
     var plot_id = $(this).data("id");
     $("#" + plot_id).toggleClass("highlight");
 });
 
-// highlight all items in routine if hovering in plot list
+// highlight all corresponding plots in routine if hovering in plot list
 $("#plot-list").on("mouseenter mouseleave", ".plot-list-routine-title", function () {
     $(this).siblings(".plot-list-item").each(function() {
         var plot_id = $(this).data("id");
@@ -288,6 +293,7 @@ $("#plot-list").on("mouseenter mouseleave", ".plot-list-routine-title", function
     });
 });
 
+// toggle grid functionality
 $("#toggle-grid").on("click", function () {
     $(this).toggleClass("on");
     var all_containers = $(".plot-container, .table-container");
