@@ -48,7 +48,7 @@ class Table(Data):
     def __init__(self, plot_data):
         super().__init__(plot_data)
         self.data = json.loads(plot_data["data"])
-        self.caption = caption = "<caption>%s (%s)</caption>" % (html.escape(self.name), html.escape(self.file))
+        self.caption = "<caption>%s (%s)</caption>" % (html.escape(self.name), html.escape(self.file))
 
     def generate_table_HTML(self):
         table_body_HTML = ""

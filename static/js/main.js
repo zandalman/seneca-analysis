@@ -1,4 +1,11 @@
 
+$(document).ready(function () {
+    $("#plots-container").sortable({
+        containment: "#plots-container"
+    });
+    $("#plots-container").sortable("disable");
+});
+
 // initialize global variables
 var paused = false;
 var timeElapsed = 0;
@@ -12,12 +19,29 @@ function set_dims(width, height, selector) {
     selector.height(height * ratio);
 }
 
+function grid_on(selector) {
+    selector.draggable("disable");
+    selector.css("position", "initial");
+    selector.css("top", "initial");
+    selector.css("left", "initial");
+}
+
+function grid_off(selector) {
+    selector.each(function () {
+        var pos = $(this).position();
+        $(this).css("top", pos.top);
+        $(this).css("left", pos.left);
+    });
+    selector.draggable("enable");
+    selector.css("position", "absolute");
+}
+
 // initialize a plot
 function init_img(url, container) {
 
     var selector = $("#" + container);
     $("<img/>").attr("src", url).on("load", function () {
-        set_dims(this.width, this.height, selector)
+        set_dims(this.width / 2, this.height / 2, selector);
         selector.resizable({
             aspectRatio: true,
             maxHeight: max_dims[1],
@@ -26,7 +50,13 @@ function init_img(url, container) {
             minWidth: 30,
             containment: "#plots-container",
             autoHide: true,
-            handles: "n, e, s, w"
+            handles: "n, e, s, w",
+            stop: function() {
+                if ($("#toggle-grid").hasClass("on")) {
+                    $("#toggle-grid").trigger("click");
+                    $("#toggle-grid").trigger("click");
+                }
+            }
         });
         selector.css("background-image", "url('" + url + "')");
         selector.data("url", url);
@@ -35,6 +65,9 @@ function init_img(url, container) {
             containment: "#plots-container"
         });
         selector.css("position", "absolute");
+        if ($("#toggle-grid").hasClass("on")) {
+            grid_on(selector);
+        }
     });
 }
 
@@ -46,6 +79,9 @@ function init_table(container) {
         containment: "#plots-container"
     });
     selector.css("position", "absolute");
+    if ($("#toggle-grid").hasClass("on")) {
+        grid_on(selector);
+    }
 }
 
 function update_img(url, container) {
@@ -238,30 +274,16 @@ $("#plot-list").on("mouseenter mouseleave", ".plot-list-routine-title", function
     });
 });
 
-
 $("#toggle-grid").on("click", function () {
     $(this).toggleClass("on");
-    var grid_on = $(this).hasClass("on");
     var all_containers = $(".plot-container, .table-container");
-    if (grid_on) {
+    if ($(this).hasClass("on")) {
         $(this).text("grid_on");
-        all_containers.draggable("destroy");
-        $("#plots-container").sortable();
-        all_containers.css("position", "initial");
-        all_containers.css("top", "initial");
-        all_containers.css("left", "initial");
+        $("#plots-container").sortable("enable");
+        grid_on(all_containers);
     } else {
         $(this).text("grid_off");
-        all_containers.each(function () {
-            var pos = $(this).position();
-            $(this).css("top", pos.top);
-            $(this).css("left", pos.left);
-        });
-        $("#plots-container").sortable("destroy");
-        all_containers.draggable({
-            snap: ".plot-container.visible, .table-container.visible",
-            containment: "#plots-container"
-        });
-        all_containers.css("position", "absolute");
+        $("#plots-container").sortable("disable");
+        grid_off(all_containers);
     }
 });

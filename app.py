@@ -37,7 +37,7 @@ def analysis_step(obj_response):
         if os.path.getsize(plot_data_file_path) > 0:
             try:
                 plot_data_list = np.load(plot_data_file_path, allow_pickle=True)
-            except OSError:
+            except Exception:
                 break
             for plot_data in plot_data_list:
                 if plot_data["type"] == "message":
