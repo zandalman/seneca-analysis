@@ -56,6 +56,9 @@ function init_img(url, container) {
                     $("#toggle-grid").trigger("click");
                     $("#toggle-grid").trigger("click");
                 }
+            },
+            resize: function() {
+                update_grid_slider();
             }
         });
         selector.css("background-image", "url('" + url + "')");
@@ -68,6 +71,7 @@ function init_img(url, container) {
         if ($("#toggle-grid").hasClass("on")) {
             grid_on(selector);
         }
+        update_grid_slider();
     });
 }
 
@@ -92,6 +96,7 @@ function update_img(url, container) {
         selector.css("background-image", "url('" + url + "')");
         selector.data("url", url);
     });
+    update_grid_slider();
 }
 
 // start the analysis
@@ -194,6 +199,7 @@ $("#plot-list").on("click", ".plot-list-item", function () {
     plot_selector.toggleClass("visible");
     $(this).toggleClass("invisible");
     $(this).toggleClass("visible");
+    update_grid_slider();
 });
 
 // toggle visibility for all plots and data tables from a routine
@@ -205,6 +211,7 @@ $("#plot-list").on("click", ".plot-list-routine-title", function () {
             $("#" + plot_id).show();
             $(this).removeClass("invisible");
             $(this).addClass("visible");
+            update_grid_slider();
         } else {
             $("#" + plot_id).hide();
             $(this).removeClass("visible");
@@ -248,17 +255,24 @@ $("#slider-grid").slider({
         $("#grid-size").val(30);
         },
     slide: function(event, ui) {
-        $("#grid-size").val(ui.value);
-        if ($("#toggle-grid").hasClass("on")) {
-            1+1;
-        }
+        $(".plot-container").each(function () {
+            set_dims(ui.value * $(this).width() / $(this).height(), ui.value, $(this));
+        });
     }
 });
 
-// change slider value on handle change
-$("#grid-size").on("change", function () {
-    $("#slider-grid").slider("value", $(this).val());
-});
+function update_grid_slider() {
+    var num = $(".plot-container.visible").length;
+    if (num === 0) {
+        $("#slider-grid").slider("value", 30);
+    } else {
+        var tot_height = 0;
+        $(".plot-container.visible").each(function () {
+            tot_height += $(this).height();
+        });
+        $("#slider-grid").slider("value", tot_height / num);
+    }
+}
 
 // highlight an item if hovering in plot list
 $("#plot-list").on("mouseenter mouseleave", ".plot-list-item", function () {
