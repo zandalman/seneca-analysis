@@ -13,6 +13,7 @@
     <script src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/sijax/sijax.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/sijax/sijax_comet.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/sijax/sijax_upload.js') }}"></script>
     {% block script1 %}{% endblock %}
     <title>{% block title %}{% endblock %}</title>
     <script type="text/javascript">{{ g.sijax.get_js()|safe }}</script>

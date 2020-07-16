@@ -4,7 +4,9 @@
     -ms-user-select: none;
     user-select: none;
     font-family: ubuntu;
-    background-color: #eaeaea
+}
+body {
+    background-color: #eaeaea;
 }
 .button {
     cursor: pointer;
@@ -164,4 +166,26 @@ p {
     margin: 0 auto;
     position: relative;
     top: 50px;
+}
+#routine-list {
+    border: 1px solid black;
+    padding-left: 0;
+    height: 10em;
+    overflow-y: scroll;
+}
+.routine {
+    list-style-type: none;
+    background-color: lightgrey;
+}
+.routine:nth-child(even) {
+    background-color: #a5a5a5;
+}
+.routine.ui-selecting {
+    background: lightblue;
+}
+.routine.ui-selected {
+    background: skyblue;
+}
+#add-routine-form {
+    display: inline-block;
 }

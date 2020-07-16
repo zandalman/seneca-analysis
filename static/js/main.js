@@ -1,16 +1,30 @@
 
-$(document).ready(function () {
-    $("#plots-container").sortable({
-        containment: "#plots-container"
-    });
-    $("#plots-container").sortable("disable");
-});
-
 // initialize global variables
 var paused = false; // whether analysis was just paused
 var timeElapsed = 0; // time elapsed on timer
 var timerID = -1;
 var max_dims = [0.5 * $(document).width(), 0.5 * $(document).height()]; // maximum plot size
+var selected_files = [];
+
+$(document).ready(function () {
+    $("#plots-container").sortable({
+        containment: "#plots-container"
+    });
+    $("#plots-container").sortable("disable");
+    $("#routine-list").selectable({
+        selected: function(event, ui) {
+            selected_files.push(ui.selected.id);
+        }, start: function(event, ui) {
+            selected_files = [];
+        }, stop: function(event, ui) {
+            if (selected_files.length === 0) {
+                $("#remove-routine").addClass("inactive");
+            } else {
+                $("#remove-routine").removeClass("inactive");
+            }
+        }
+    });
+});
 
 // set the dimensions
 function set_dims(width, height, selector) {
@@ -307,3 +321,33 @@ $("#toggle-grid").on("click", function () {
         grid_off(all_containers);
     }
 });
+
+$("#remove-routine").on("click", function () {
+    if (!$(this).hasClass("inactive")) {
+        $("#remove-routine").addClass("inactive");
+        $.each(selected_files, function(index, filename) {
+            $("#routine-list #" + filename).remove();
+        });
+        Sijax.request("remove_routine", [selected_files]);
+    }
+});
+
+function unselect() {
+    $(".ui-selected").removeClass("ui-selected");
+    $("#remove-routine").addClass("inactive");
+    selected_files = [];
+}
+
+window.addEventListener("keydown", function (event) {
+    if (event.defaultPrevented) {
+        return;
+    }
+    switch (event.key) {
+        case "Escape": // unselect items
+            unselect();
+            break;
+        default:
+            return;
+    }
+    event.preventDefault();
+    }, true);
