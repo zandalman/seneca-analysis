@@ -14,11 +14,12 @@
             <input type="file" name="routine" id="routine-upload" style="display: none;" onchange="form.submit();"/>
         </form>
         <i class="material-icons button inactive" style="color:red;" id="remove-routine" title="remove routine">remove_circle</i>
+        <i class="material-icons button inactive" style="color:dodgerblue;" id="unselect" title="unselect">highlight_off</i>
     </div><hr>
     <div class="row">
         <ul id="routine-list">
-            {%- for filename in filenames %}
-                <li class="routine" id="f{{ loop.index0 }}">{{ filename }}</li>
+            {%- for id, filename in routines.items() %}
+                <li class="routine" id="{{ id }}">{{ filename }}</li>
             {%- endfor %}
         </ul>
     </div><hr class="main">

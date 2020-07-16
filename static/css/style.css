@@ -41,7 +41,7 @@ h2 {
     font-family: 'Source Code Pro', monospace;
     background-color: black;
     color: limegreen;
-    height: 100px;
+    height: 10em;
     overflow-y: scroll;
 }
 hr.main {
@@ -68,12 +68,13 @@ hr.main {
     z-index: 1001;
 }
 #loader {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     color: white;
+    background-color: #eaeaea;
     z-index: 1000;
 }
 @keyframes spin {
@@ -168,7 +169,7 @@ p {
     top: 50px;
 }
 #routine-list {
-    border: 1px solid black;
+    border: 2px solid black;
     padding-left: 0;
     height: 10em;
     overflow-y: scroll;
@@ -188,4 +189,10 @@ p {
 }
 #add-routine-form {
     display: inline-block;
+}
+.routine.running {
+    color: green;
+}
+.routine.error {
+    color: red;
 }

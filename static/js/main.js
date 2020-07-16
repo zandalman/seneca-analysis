@@ -18,9 +18,9 @@ $(document).ready(function () {
             selected_files = [];
         }, stop: function(event, ui) {
             if (selected_files.length === 0) {
-                $("#remove-routine").addClass("inactive");
+                $("#remove-routine, #unselect").addClass("inactive");
             } else {
-                $("#remove-routine").removeClass("inactive");
+                $("#remove-routine, #unselect").removeClass("inactive");
             }
         }
     });
@@ -324,7 +324,7 @@ $("#toggle-grid").on("click", function () {
 
 $("#remove-routine").on("click", function () {
     if (!$(this).hasClass("inactive")) {
-        $("#remove-routine").addClass("inactive");
+        $("#remove-routine, #unselect").addClass("inactive");
         $.each(selected_files, function(index, filename) {
             $("#routine-list #" + filename).remove();
         });
@@ -334,9 +334,15 @@ $("#remove-routine").on("click", function () {
 
 function unselect() {
     $(".ui-selected").removeClass("ui-selected");
-    $("#remove-routine").addClass("inactive");
+    $("#remove-routine, #unselect").addClass("inactive");
     selected_files = [];
 }
+
+$("#unselect").on("click", function () {
+    if (!$("this").hasClass("inactive")) {
+        unselect();
+    }
+});
 
 window.addEventListener("keydown", function (event) {
     if (event.defaultPrevented) {

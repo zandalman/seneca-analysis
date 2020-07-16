@@ -14,7 +14,8 @@ app = Flask(__name__)
 sijax_path = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
 app.config.update(
     SIJAX_STATIC_PATH=sijax_path,
-    SIJAX_JSON_URI='/static/js/sijax/json2.js'
+    SIJAX_JSON_URI='/static/js/sijax/json2.js',
+    UPLOAD_FOLDER=os.path.join(app.root_path, "uploads")
 )
 flask_sijax.Sijax(app)
 
@@ -24,8 +25,7 @@ PLOT_DATA_PATH = os.path.join(app.root_path, "plot_data")
 ROUTINES_PATH = os.path.join(app.root_path, "routines")
 analysis_on = False
 current_plots = []
-file_order = []
-
+routines = {}
 
 def report_status(obj_response, container_id, msg):
     """Send a message to an HTML element."""
@@ -37,9 +37,9 @@ def analysis_step(obj_response):
     global current_plots
     for plot_data_file in os.listdir(PLOT_DATA_PATH):
         plot_data_file_path = os.path.join(PLOT_DATA_PATH, plot_data_file)
-        if os.path.getsize(plot_data_file_path) > 0: # ignore empty files
+        if os.path.getsize(plot_data_file_path) > 0:  # ignore empty files
             try:
-                plot_data_list = np.load(plot_data_file_path, allow_pickle=True) # load the data
+                plot_data_list = np.load(plot_data_file_path, allow_pickle=True)  # load the data
             except Exception:
                 break
             for plot_data in plot_data_list:
@@ -62,22 +62,8 @@ def analysis_step(obj_response):
                         yield from obj.update(obj_response)
 
 
-def remove_lines(file, lines_to_remove):
-    with open(file, "r") as f:
-        lines = f.readlines()
-    with open(file, "w") as f:
-        for line in lines:
-            if line.strip("\n") not in lines_to_remove:
-                f.write(line)
-
-
-def add_line(file, line):
-    with open(file, "a") as f:
-        f.write(line + "\n")
-
-
 def add_routine(obj_response, files, form_values):
-    global file_order
+    global routines
     if "routine" not in files:
         report_status(obj_response, "status", "Upload unsuccessful.")
         return
@@ -89,13 +75,14 @@ def add_routine(obj_response, files, form_values):
         report_status(obj_response, "status", "'%s' is not a Python script." % filename)
     elif filename != secure_filename(filename):
         report_status(obj_response, "status", "File name '%s' is not secure." % filename)
-    elif filename in file_order:
+    elif filename in routines.keys():
         report_status(obj_response, "status", "A routine with the name '%s' already exists." % filename)
     else:
+        file_id = gen_id("f", filename)
+        routines[file_id] = filename
+        file_data.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        obj_response.html_append("#routine-list", "<li class='routine' id='%s'>%s</li>" % (file_id, filename))
         report_status(obj_response, "status", "Upload of '%s' successful." % filename)
-        obj_response.html_append("#routine-list", "<li class='routine' id='f%s'>%s</li>" % (len(file_order), html.escape(filename)))
-        add_line(ROUTINES_PATH, filename)
-        file_order.append(filename)
 
 
 
@@ -120,13 +107,18 @@ class SijaxHandlers(object):
 
     @staticmethod
     def remove_routine(obj_response, file_ids):
-        global file_order
-        file_indices = [int(file_id[1:]) for file_id in file_ids]
-        filenames = [file_order[file_index] for file_index in file_indices]
-        remove_lines(ROUTINES_PATH, filenames)
-        file_order = [filename for i, filename in enumerate(file_order) if i not in frozenset(file_indices)]
-        if len(filenames) > 3:
-            report_status(obj_response, "status", "%s routines removed." % len(filenames))
+        global routines
+        filenames = []
+        for file_id in file_ids:
+            filename = routines[file_id]
+            filenames.append(filename)
+            try:
+                os.remove(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            except FileNotFoundError:
+                report_status(obj_response, "status", "Unable to locate '%s'." % filename)
+            routines.pop(file_id)
+        if len(file_ids) > 3:
+            report_status(obj_response, "status", "%s routines removed." % len(file_ids))
         else:
             report_status(obj_response, "status", "%s removed." % ", ".join(filenames))
 
@@ -163,10 +155,9 @@ class SijaxCometHandlers(object):
 @flask_sijax.route(app, '/')
 def main():
     """Generate the main page."""
-    global file_order
-    with open(ROUTINES_PATH, "r") as f:
-        filenames = [filename.strip("\n") for filename in f.readlines()]
-    file_order = filenames
+    global routines
+    filenames = os.listdir(app.config["UPLOAD_FOLDER"])
+    routines = {gen_id("f", filename): filename for filename in filenames}
     # Register Sijax upload handlers
     form_init_js = ''
     form_init_js += g.sijax.register_upload_callback('add-routine-form', add_routine)
@@ -174,7 +165,7 @@ def main():
         g.sijax.register_object(SijaxHandlers) # Register Sijax handlers
         g.sijax.register_comet_object(SijaxCometHandlers) # Register Sijax comet handlers
         return g.sijax.process_request()
-    return render_template('main.html', form_init_js=form_init_js, filenames=[html.escape(filename) for filename in filenames]) # Render template
+    return render_template('main.html', form_init_js=form_init_js, routines=routines) # Render template
 
 
 app.run(threaded=True, debug=True) # run the flask app with threads in debug mode

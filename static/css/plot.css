@@ -13,6 +13,9 @@
 .plot-container {
     background-size: cover;
 }
+.table-container {
+    background-color: #eaeaea;
+}
 .plot-container, .table-container {
     cursor: move;
     border: 2px solid black;
