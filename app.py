@@ -32,7 +32,6 @@ def report_status(obj_response, container_id, msg):
     """Send a message to an HTML element."""
     obj_response.html_append("#%s" % container_id, "%s<br/>" % html.escape(msg))
 
-
 # do one analysis iteration
 def analysis_step(obj_response):
     global current_plots
@@ -98,6 +97,44 @@ class Routine(object):
         obj_response.attr("#%s" % self.id, "class", "routine ui-selectee")
         report_status(obj_response, "status", "'%s' terminated successfully." % self.name)
 
+
+class RoutineRun(object):
+
+    def __init__(self, obj_response, file_id):
+        self.obj_response = obj_response
+        self.id = file_id
+
+    def start(self):
+        global routines
+        routine = [routine for routine in routines if routine.id == self.id][0]
+        self.obj_response.call("adjust_routine_class", [routine.id, True, True])
+        report_status(self.obj_response, "status", "Running '%s'." % routine.name)
+        yield self.obj_response
+        routine.process = subprocess.Popen(["python", routine.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        routine.running = True
+
+    def running(self):
+        global routines
+        routine = [routine for routine in routines if routine.id == self.id][0]
+        return routine.running and routine.process.poll() is None
+
+    def end(self):
+        global routines
+        routine = [routine for routine in routines if routine.id == self.id][0]
+        if routine.running:
+            stdout, stderr = routine.process.communicate()
+            if "Error" in stdout.decode("utf-8"):
+                self.obj_response.call("adjust_routine_class", [routine.id, False, True])
+                report_status(self.obj_response, "status", "'%s' error: '%s'." % (routine.name, stdout.decode("utf-8")))
+            else:
+                self.obj_response.call("adjust_routine_class", [routine.id, False, False])
+                report_status(self.obj_response, "status", "'%s' completed successfully." % routine.name)
+            routine.running = False
+        else:
+            self.obj_response.call("adjust_routine_class", [routine.id, False, False])
+            report_status(self.obj_response, "status", "'%s' stopped." % routine.name)
+        yield self.obj_response
+
 class SijaxHandlers(object):
 
     @staticmethod
@@ -143,49 +180,16 @@ class SijaxHandlers(object):
                 routine.stop()
 
 
-def start_run(obj_response, file_id):
-    global routines
-    routine = [routine for routine in routines if routine.id == file_id][0]
-    obj_response.attr("#%s" % routine.id, "class", "routine ui-selectee ui-selected running")
-    report_status(obj_response, "status", "Running '%s'." % routine.name)
-    yield obj_response
-    routine.process = subprocess.Popen(["python", routine.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    routine.running = True
-
-
-def routine_running(file_id):
-    global routines
-    routine = [routine for routine in routines if routine.id == file_id][0]
-    return routine.running and routine.process.poll() is None
-
-
-def end_run(obj_response, file_id):
-    global routines
-    routine = [routine for routine in routines if routine.id == file_id][0]
-    if routine.running:
-        stdout, stderr = routine.process.communicate()
-        if "Error" in stdout.decode("utf-8"):
-            obj_response.attr("#%s" % routine.id, "class", "routine ui-selectee error")
-            report_status(obj_response, "status", "'%s' error: '%s'." % (routine.name, stdout.decode("utf-8")))
-        else:
-            obj_response.attr("#%s" % routine.id, "class", "routine ui-selectee")
-            report_status(obj_response, "status", "'%s' completed successfully." % routine.name)
-        routine.running = False
-    else:
-        obj_response.attr("#%s" % routine.id, "class", "routine ui-selectee")
-        report_status(obj_response, "status", "'%s' stopped." % routine.name)
-    yield obj_response
-
-
 class SijaxCometHandlers(object):
 
     @staticmethod
     def run_routine(obj_response, file_id):
-        yield from start_run(obj_response, file_id)
-        while routine_running(file_id):
+        run = RoutineRun(obj_response, file_id)
+        yield from run.start()
+        while run.running():
             time.sleep(1)
         else:
-            yield from end_run(obj_response, file_id)
+            yield from run.end()
 
     @staticmethod
     def analyse(obj_response, paused, period):

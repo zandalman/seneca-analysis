@@ -400,3 +400,14 @@ $("#slider-status-size").slider({
         $("#status").css("font-size", ui.value);
     }
 });
+
+function adjust_routine_class(id, running, error) {
+    if (running) {
+        $("#" + id).addClass("running");
+    } else {
+        $("#" + id).removeClass("running");
+        if (error) {
+            $("#" + id).addClass("error");
+        }
+    }
+}

@@ -168,6 +168,7 @@ p {
     margin: 0 auto;
     position: relative;
     top: 50px;
+    width: 5px;
 }
 #routine-list {
     border: 2px solid black;
@@ -208,7 +209,8 @@ p {
     right: 20px;
     width: 5px;
 }
-#slider-status-size .ui-slider-handle {
+#slider-status-size .ui-slider-handle, #slider-grid .ui-slider-handle {
     height: 10px;
     margin-left: -2px;
+    cursor: ns-resize;
 }
