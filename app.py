@@ -6,6 +6,7 @@ import os
 import time
 import numpy as np
 from werkzeug import secure_filename
+from multiprocessing import Process
 from plots import *
 
 
@@ -25,7 +26,7 @@ PLOT_DATA_PATH = os.path.join(app.root_path, "plot_data")
 ROUTINES_PATH = os.path.join(app.root_path, "routines")
 analysis_on = False
 current_plots = []
-routines = {}
+routines = []
 
 def report_status(obj_response, container_id, msg):
     """Send a message to an HTML element."""
@@ -75,16 +76,45 @@ def add_routine(obj_response, files, form_values):
         report_status(obj_response, "status", "'%s' is not a Python script." % filename)
     elif filename != secure_filename(filename):
         report_status(obj_response, "status", "File name '%s' is not secure." % filename)
-    elif filename in routines.keys():
+    elif filename in [routine.name for routine in routines]:
         report_status(obj_response, "status", "A routine with the name '%s' already exists." % filename)
     else:
-        file_id = gen_id("f", filename)
-        routines[file_id] = filename
+        routines.append(Routine(filename))
         file_data.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        obj_response.html_append("#routine-list", "<li class='routine' id='%s'>%s</li>" % (file_id, filename))
+        obj_response.html_append("#routine-list", "<li class='routine' id='%s'>%s</li>" % (routines[-1].id, filename))
         report_status(obj_response, "status", "Upload of '%s' successful." % filename)
 
 
+class Routine(object):
+
+    def __init__(self, filename):
+        self.name = filename
+        self.path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        self.id = gen_id("f", filename)
+        self.running = False
+
+    def run(self, obj_response):
+        self.process = subprocess.Popen(["python", self.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        obj_response.attr("#%s" % self.id, "class", "routine ui-selectee ui-selected running")
+        report_status(obj_response, "status", "Running '%s'." % self.name)
+        yield obj_response
+        while self.running and self.process.poll() is None:
+            time.sleep(1)
+        else:
+            stdout, stderr = self.process.communicate()
+            if stderr:
+                obj_response.attr("#%s" % self.id, "class", "routine ui-selectee error")
+                report_status(obj_response, "status", "'%s' error: '%s'." % self.name, stderr)
+            else:
+                obj_response.attr("#%s" % self.id, "class", "routine ui-selectee")
+                report_status(obj_response, "status", "'%s' completed successfully." % self.name)
+            self.running = False
+            yield obj_response
+
+    def stop(self, obj_response):
+        self.process.terminate()
+        obj_response.attr("#%s" % self.id, "class", "routine ui-selectee")
+        report_status(obj_response, "status", "'%s' terminated successfully." % self.name)
 
 class SijaxHandlers(object):
 
@@ -104,25 +134,40 @@ class SijaxHandlers(object):
         report_status(obj_response, "status", "Analysis paused")
         obj_response.call("stop_timer")
 
-
     @staticmethod
     def remove_routine(obj_response, file_ids):
         global routines
         filenames = []
         for file_id in file_ids:
-            filename = routines[file_id]
+            routine = [routine for routine in routines if routine.id == file_id][0]
+            filename = routine.name
             filenames.append(filename)
             try:
                 os.remove(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             except FileNotFoundError:
                 report_status(obj_response, "status", "Unable to locate '%s'." % filename)
-            routines.pop(file_id)
+            routines = [routine for routine in routines if routine.id != file_id]
         if len(file_ids) > 3:
             report_status(obj_response, "status", "%s routines removed." % len(file_ids))
         else:
             report_status(obj_response, "status", "%s removed." % ", ".join(filenames))
 
+    @staticmethod
+    def stop_routine(obj_response, file_ids):
+        global routines
+        for file_id in file_ids:
+            routine = [routine for routine in routines if routine.id == file_id][0]
+            if routine.running:
+                print("test")
+                routine.stop()
+
 class SijaxCometHandlers(object):
+
+    @staticmethod
+    def run_routine(obj_response, file_id):
+        global routines
+        routine = [routine for routine in routines if routine.id == file_id][0]
+        yield from routine.run(obj_response)
 
     @staticmethod
     def analyse(obj_response, paused, period):
@@ -157,7 +202,8 @@ def main():
     """Generate the main page."""
     global routines
     filenames = os.listdir(app.config["UPLOAD_FOLDER"])
-    routines = {gen_id("f", filename): filename for filename in filenames}
+    routines = [Routine(filename) for filename in filenames]
+    routines_dict = {routine.id: routine.name for routine in routines}
     # Register Sijax upload handlers
     form_init_js = ''
     form_init_js += g.sijax.register_upload_callback('add-routine-form', add_routine)
@@ -165,7 +211,7 @@ def main():
         g.sijax.register_object(SijaxHandlers) # Register Sijax handlers
         g.sijax.register_comet_object(SijaxCometHandlers) # Register Sijax comet handlers
         return g.sijax.process_request()
-    return render_template('main.html', form_init_js=form_init_js, routines=routines) # Render template
+    return render_template('main.html', form_init_js=form_init_js, routines=routines_dict) # Render template
 
 
 app.run(threaded=True, debug=True) # run the flask app with threads in debug mode

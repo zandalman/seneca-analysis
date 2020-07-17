@@ -11,15 +11,21 @@ $(document).ready(function () {
         containment: "#plots-container"
     });
     $("#plots-container").sortable("disable");
-    $("#routine-list").selectable({
+    $("#routine-list").selectableScroll({
+        scrollSnapX: 5,
+        scrollAmount: 25,
         selected: function(event, ui) {
             selected_files.push(ui.selected.id);
+            if (ui.selected.classList.contains("running")) {
+                $("#stop-routine").removeClass("inactive");
+            } else {
+                $("#run-routine").removeClass("inactive");
+            }
         }, start: function(event, ui) {
             selected_files = [];
+            $("#remove-routine, #unselect, #run-routine, #stop-routine").addClass("inactive");
         }, stop: function(event, ui) {
-            if (selected_files.length === 0) {
-                $("#remove-routine, #unselect").addClass("inactive");
-            } else {
+            if (!(selected_files.length === 0)) {
                 $("#remove-routine, #unselect").removeClass("inactive");
             }
         }
@@ -324,9 +330,9 @@ $("#toggle-grid").on("click", function () {
 
 $("#remove-routine").on("click", function () {
     if (!$(this).hasClass("inactive")) {
-        $("#remove-routine, #unselect").addClass("inactive");
-        $.each(selected_files, function(index, filename) {
-            $("#routine-list #" + filename).remove();
+        $("#remove-routine, #unselect, #run-routine, #stop-routine").addClass("inactive");
+        $.each(selected_files, function(index, file_id) {
+            $("#routine-list #" + file_id).remove();
         });
         Sijax.request("remove_routine", [selected_files]);
     }
@@ -334,7 +340,7 @@ $("#remove-routine").on("click", function () {
 
 function unselect() {
     $(".ui-selected").removeClass("ui-selected");
-    $("#remove-routine, #unselect").addClass("inactive");
+    $("#remove-routine, #unselect, #run-routine, #stop-routine").addClass("inactive");
     selected_files = [];
 }
 
@@ -357,3 +363,31 @@ window.addEventListener("keydown", function (event) {
     }
     event.preventDefault();
     }, true);
+
+$("#filter").on("keyup", function() {
+    unselect();
+    var filter = $(this).val();
+    $(".routine").show();
+    $(".routine").each(function () {
+        var filename = $(this).text();
+        if (filename.indexOf(filter) === -1) {
+            $(this).hide();
+        }
+    });
+});
+
+$("#run-routine").on("click", function() {
+    if (!$(this).hasClass("inactive")) {
+        $.each(selected_files, function(index, file_id) {
+            if (!$("#" + file_id).hasClass("running")) {
+                sjxComet.request("run_routine", [file_id]);
+            }
+        });
+    }
+});
+
+$("#stop-routine").on("click", function() {
+    if (!$(this).hasClass("inactive")) {
+        Sijax.request("stop_routine", [selected_files]);
+    }
+});

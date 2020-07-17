@@ -15,8 +15,12 @@
         </form>
         <i class="material-icons button inactive" style="color:red;" id="remove-routine" title="remove routine">remove_circle</i>
         <i class="material-icons button inactive" style="color:dodgerblue;" id="unselect" title="unselect">highlight_off</i>
+        <i class="material-icons button inactive" style="color:green;" id="run-routine" title="run routines">play_arrow</i>
+        <i class="material-icons button inactive" style="color:red;" id="stop-routine" title="stop routine">stop</i>
     </div><hr>
     <div class="row">
+        <label for="filter">Filter:</label>
+        <input type="text" id="filter">
         <ul id="routine-list">
             {%- for id, filename in routines.items() %}
                 <li class="routine" id="{{ id }}">{{ filename }}</li>

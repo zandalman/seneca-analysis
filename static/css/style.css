@@ -173,10 +173,11 @@ p {
     padding-left: 0;
     height: 10em;
     overflow-y: scroll;
+    background-color: lightgrey;
 }
 .routine {
     list-style-type: none;
-    background-color: lightgrey;
+    border-bottom: 1px solid rgba(0, 0, 0, .2);
 }
 .routine:nth-child(even) {
     background-color: #a5a5a5;
@@ -195,4 +196,7 @@ p {
 }
 .routine.error {
     color: red;
+}
+#filter {
+    outline: none;
 }
