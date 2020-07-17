@@ -275,9 +275,6 @@ $("#slider-grid").slider({
     min: 30,
     max: Math.min(max_dims[0], max_dims[1]),
     step: 1,
-    create: function() {
-        $("#grid-size").val(30);
-        },
     slide: function(event, ui) {
         $(".plot-container").each(function () {
             set_dims(ui.value * $(this).width() / $(this).height(), ui.value, $(this));
@@ -390,5 +387,16 @@ $("#run-routine").on("click", function() {
 $("#stop-routine").on("click", function() {
     if (!$(this).hasClass("inactive")) {
         Sijax.request("stop_routine", [selected_files]);
+    }
+});
+
+$("#slider-status-size").slider({
+    orientation: "vertical",
+    min: 6,
+    max: 24,
+    step: 0.1,
+    value: 16,
+    slide: function(event, ui) {
+        $("#status").css("font-size", ui.value);
     }
 });
