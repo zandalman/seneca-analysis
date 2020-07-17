@@ -383,6 +383,7 @@ $("#run-routine").on("click", function() {
                 sjxComet.request("run_routine", [file_id]);
             }
         });
+        $("#stop-routine").removeClass("inactive");
     }
 });
 

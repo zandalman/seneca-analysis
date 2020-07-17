@@ -93,24 +93,6 @@ class Routine(object):
         self.id = gen_id("f", filename)
         self.running = False
 
-    def run(self, obj_response):
-        self.process = subprocess.Popen(["python", self.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        obj_response.attr("#%s" % self.id, "class", "routine ui-selectee ui-selected running")
-        report_status(obj_response, "status", "Running '%s'." % self.name)
-        yield obj_response
-        while self.running and self.process.poll() is None:
-            time.sleep(1)
-        else:
-            stdout, stderr = self.process.communicate()
-            if stderr:
-                obj_response.attr("#%s" % self.id, "class", "routine ui-selectee error")
-                report_status(obj_response, "status", "'%s' error: '%s'." % self.name, stderr)
-            else:
-                obj_response.attr("#%s" % self.id, "class", "routine ui-selectee")
-                report_status(obj_response, "status", "'%s' completed successfully." % self.name)
-            self.running = False
-            yield obj_response
-
     def stop(self, obj_response):
         self.process.terminate()
         obj_response.attr("#%s" % self.id, "class", "routine ui-selectee")
@@ -158,16 +140,52 @@ class SijaxHandlers(object):
         for file_id in file_ids:
             routine = [routine for routine in routines if routine.id == file_id][0]
             if routine.running:
-                print("test")
                 routine.stop()
+
+
+def start_run(obj_response, file_id):
+    global routines
+    routine = [routine for routine in routines if routine.id == file_id][0]
+    obj_response.attr("#%s" % routine.id, "class", "routine ui-selectee ui-selected running")
+    report_status(obj_response, "status", "Running '%s'." % routine.name)
+    yield obj_response
+    routine.process = subprocess.Popen(["python", routine.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    routine.running = True
+
+
+def routine_running(file_id):
+    global routines
+    routine = [routine for routine in routines if routine.id == file_id][0]
+    return routine.running and routine.process.poll() is None
+
+
+def end_run(obj_response, file_id):
+    global routines
+    routine = [routine for routine in routines if routine.id == file_id][0]
+    if routine.running:
+        stdout, stderr = routine.process.communicate()
+        if "Error" in stdout.decode("utf-8"):
+            obj_response.attr("#%s" % routine.id, "class", "routine ui-selectee error")
+            report_status(obj_response, "status", "'%s' error: '%s'." % (routine.name, stdout.decode("utf-8")))
+        else:
+            obj_response.attr("#%s" % routine.id, "class", "routine ui-selectee")
+            report_status(obj_response, "status", "'%s' completed successfully." % routine.name)
+        routine.running = False
+    else:
+        obj_response.attr("#%s" % routine.id, "class", "routine ui-selectee")
+        report_status(obj_response, "status", "'%s' stopped." % routine.name)
+    yield obj_response
+
 
 class SijaxCometHandlers(object):
 
     @staticmethod
     def run_routine(obj_response, file_id):
-        global routines
-        routine = [routine for routine in routines if routine.id == file_id][0]
-        yield from routine.run(obj_response)
+        yield from start_run(obj_response, file_id)
+        while routine_running(file_id):
+            time.sleep(1)
+        else:
+            yield from end_run(obj_response, file_id)
 
     @staticmethod
     def analyse(obj_response, paused, period):
