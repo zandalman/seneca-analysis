@@ -114,7 +114,7 @@ class SijaxHandlers(object):
     @staticmethod
     def stop_analysis(obj_response):
         """Stop the analysis."""
-        print(session["analysis_on"])
+        print(session)
         session["analysis_on"] = False
         report_status(obj_response, "status", "Analysis stopped")
         obj_response.call("reset_timer")
@@ -122,14 +122,14 @@ class SijaxHandlers(object):
     @staticmethod
     def pause_analysis(obj_response):
         """Pause the analysis."""
-        print(session["analysis_on"])
+        print(session)
         session["analysis_on"] = False
         report_status(obj_response, "status", "Analysis paused")
         obj_response.call("stop_timer")
 
     @staticmethod
     def remove_routine(obj_response, file_ids):
-        routines = jsonpickle.decode(session["routines"])
+        routines = jsonpickle.decode(session)
         filenames = []
         for file_id in file_ids:
             routine = [routine for routine in routines if routine.id == file_id][0]
@@ -171,7 +171,7 @@ class SijaxCometHandlers(object):
     def analyse(obj_response, paused, period):
         """Start the analysis."""
         session["analysis_on"] = True
-        print(session["analysis_on"])
+        print(session)
         if paused:
             report_status(obj_response, "status", "Analysis restarted")
         else:
