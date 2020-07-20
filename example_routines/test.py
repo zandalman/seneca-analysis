@@ -27,7 +27,7 @@ def linear_fit(x, y):
 if __name__ == "__main__":
     analysis = seneca_analysis.Analysis()
     x, y = np.random.random(3).tolist(), np.random.random(3).tolist()
-    for i in range(1000):
+    for i in range(100):
         x.append(np.random.random(1)[0])
         y.append(np.random.random(1)[0])
         data = linear_fit(x, y)

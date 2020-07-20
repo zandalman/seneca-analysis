@@ -1,17 +1,18 @@
 
 # import modules
-from flask import Flask, render_template, g
+from flask import Flask, render_template, g, session
 import flask_sijax
 import os
 import time
 import numpy as np
 from werkzeug import secure_filename
-from multiprocessing import Process
+import jsonpickle
 from plots import *
 
 
 # initialize and configure Flask
 app = Flask(__name__)
+app.secret_key = gen_id("", "secret key")
 sijax_path = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
 app.config.update(
     SIJAX_STATIC_PATH=sijax_path,
@@ -24,9 +25,6 @@ flask_sijax.Sijax(app)
 # set global variables
 PLOT_DATA_PATH = os.path.join(app.root_path, "plot_data")
 ROUTINES_PATH = os.path.join(app.root_path, "routines")
-analysis_on = False
-current_plots = []
-routines = []
 
 def report_status(obj_response, container_id, msg):
     """Send a message to an HTML element."""
@@ -34,7 +32,6 @@ def report_status(obj_response, container_id, msg):
 
 # do one analysis iteration
 def analysis_step(obj_response):
-    global current_plots
     for plot_data_file in os.listdir(PLOT_DATA_PATH):
         plot_data_file_path = os.path.join(PLOT_DATA_PATH, plot_data_file)
         if os.path.getsize(plot_data_file_path) > 0:  # ignore empty files
@@ -52,18 +49,18 @@ def analysis_step(obj_response):
                     yield obj_response
                 else:
                     obj = obj_types[plot_data["type"]](plot_data)
-                    if obj.id not in [plot["id"] for plot in current_plots]:
-                        if not obj.file in [plot["file"] for plot in current_plots]: # Check if data is from a new routine
+                    if obj.id not in [plot["id"] for plot in g.current_plots]:
+                        if not obj.file in [plot["file"] for plot in g.current_plots]: # Check if data is from a new routine
                             report_status(obj_response, "status", "Receiving data from '%s'." % obj.file)
                             yield from obj.create_routine(obj_response)
                         yield from obj.create(obj_response)
-                        current_plots.append(dict(file=obj.file, id=obj.id))
+                        g.current_plots.append(dict(file=obj.file, id=obj.id))
                     else:
                         yield from obj.update(obj_response)
 
 
 def add_routine(obj_response, files, form_values):
-    global routines
+    routines = jsonpickle.decode(session["routines"])
     if "routine" not in files:
         report_status(obj_response, "status", "Upload unsuccessful.")
         return
@@ -82,6 +79,7 @@ def add_routine(obj_response, files, form_values):
         file_data.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         obj_response.html_append("#routine-list", "<li class='routine' id='%s'>%s</li>" % (routines[-1].id, filename))
         report_status(obj_response, "status", "Upload of '%s' successful." % filename)
+    session["routines"] = jsonpickle.encode(routines)
 
 
 class Routine(object):
@@ -92,70 +90,46 @@ class Routine(object):
         self.id = gen_id("f", filename)
         self.running = False
 
-    def stop(self, obj_response):
-        self.process.terminate()
-        obj_response.attr("#%s" % self.id, "class", "routine ui-selectee")
-        report_status(obj_response, "status", "'%s' terminated successfully." % self.name)
-
-
-class RoutineRun(object):
-
-    def __init__(self, obj_response, file_id):
-        self.obj_response = obj_response
-        self.id = file_id
+    def stop(self, obj_response, user_init=False):
+        self.running = False
+        if user_init:
+            self.process.terminate()
+            obj_response.call("adjust_routine_class", [self.id, False])
+            report_status(obj_response, "status", "'%s' terminated successfully." % self.name)
+        else:
+            stdout, stderr = self.process.communicate()
+            if "Error" in stdout.decode("utf-8"):
+                obj_response.call("adjust_routine_class", [self.id, True])
+                report_status(obj_response, "status", "'%s' error: '%s'." % (self.name, stdout.decode("utf-8")))
+            else:
+                obj_response.call("adjust_routine_class", [self.id, False])
+                report_status(obj_response, "status", "'%s' completed successfully." % self.name)
 
     def start(self):
-        global routines
-        routine = [routine for routine in routines if routine.id == self.id][0]
-        self.obj_response.call("adjust_routine_class", [routine.id, True, True])
-        report_status(self.obj_response, "status", "Running '%s'." % routine.name)
-        yield self.obj_response
-        routine.process = subprocess.Popen(["python", routine.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        routine.running = True
-
-    def running(self):
-        global routines
-        routine = [routine for routine in routines if routine.id == self.id][0]
-        return routine.running and routine.process.poll() is None
-
-    def end(self):
-        global routines
-        routine = [routine for routine in routines if routine.id == self.id][0]
-        if routine.running:
-            stdout, stderr = routine.process.communicate()
-            if "Error" in stdout.decode("utf-8"):
-                self.obj_response.call("adjust_routine_class", [routine.id, False, True])
-                report_status(self.obj_response, "status", "'%s' error: '%s'." % (routine.name, stdout.decode("utf-8")))
-            else:
-                self.obj_response.call("adjust_routine_class", [routine.id, False, False])
-                report_status(self.obj_response, "status", "'%s' completed successfully." % routine.name)
-            routine.running = False
-        else:
-            self.obj_response.call("adjust_routine_class", [routine.id, False, False])
-            report_status(self.obj_response, "status", "'%s' stopped." % routine.name)
-        yield self.obj_response
+        self.process = subprocess.Popen(["python", self.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.running = True
 
 class SijaxHandlers(object):
 
     @staticmethod
     def stop_analysis(obj_response):
         """Stop the analysis."""
-        global analysis_on
-        analysis_on = False
+        print(session["analysis_on"])
+        session["analysis_on"] = False
         report_status(obj_response, "status", "Analysis stopped")
         obj_response.call("reset_timer")
 
     @staticmethod
     def pause_analysis(obj_response):
         """Pause the analysis."""
-        global analysis_on
-        analysis_on = False
+        print(session["analysis_on"])
+        session["analysis_on"] = False
         report_status(obj_response, "status", "Analysis paused")
         obj_response.call("stop_timer")
 
     @staticmethod
     def remove_routine(obj_response, file_ids):
-        global routines
+        routines = jsonpickle.decode(session["routines"])
         filenames = []
         for file_id in file_ids:
             routine = [routine for routine in routines if routine.id == file_id][0]
@@ -170,44 +144,46 @@ class SijaxHandlers(object):
             report_status(obj_response, "status", "%s routines removed." % len(file_ids))
         else:
             report_status(obj_response, "status", "%s removed." % ", ".join(filenames))
+        session["routines"] = jsonpickle.encode(routines)
 
     @staticmethod
     def stop_routine(obj_response, file_ids):
-        global routines
+        routines = jsonpickle.decode(session["routines"])
         for file_id in file_ids:
             routine = [routine for routine in routines if routine.id == file_id][0]
             if routine.running:
-                routine.stop()
+                routine.stop(obj_response, user_init=True)
+        session["routines"] = jsonpickle.encode(routines)
 
+    @staticmethod
+    def run_routine(obj_response, file_id):
+        routines = jsonpickle.decode(session["routines"])
+        routine = [routine for routine in routines if routine.id == file_id][0]
+        routine.start()
+        routine.process.wait()
+        if routine.running:
+            routine.stop(obj_response)
+        session["routines"] = jsonpickle.encode(routines)
 
 class SijaxCometHandlers(object):
 
     @staticmethod
-    def run_routine(obj_response, file_id):
-        run = RoutineRun(obj_response, file_id)
-        yield from run.start()
-        while run.running():
-            time.sleep(1)
-        else:
-            yield from run.end()
-
-    @staticmethod
     def analyse(obj_response, paused, period):
         """Start the analysis."""
-        global analysis_on, current_plots
-        analysis_on = True
+        session["analysis_on"] = True
+        print(session["analysis_on"])
         if paused:
             report_status(obj_response, "status", "Analysis restarted")
         else:
             report_status(obj_response, "status", "Analysis started")
             remove_plots(obj_response)
-            current_plots = []
+            g.current_plots = []
             for plot_data_file in os.listdir(PLOT_DATA_PATH):
                 os.remove(os.path.join(PLOT_DATA_PATH, plot_data_file))
         obj_response.call("start_timer") # start the timer
         yield obj_response
         give_warning = True
-        while analysis_on:
+        while session["analysis_on"]:
             step_start_time = time.time()
             yield from analysis_step(obj_response)
             step_time = time.time() - step_start_time
@@ -222,10 +198,14 @@ class SijaxCometHandlers(object):
 @flask_sijax.route(app, '/')
 def main():
     """Generate the main page."""
-    global routines
     filenames = os.listdir(app.config["UPLOAD_FOLDER"])
     routines = [Routine(filename) for filename in filenames]
     routines_dict = {routine.id: routine.name for routine in routines}
+    # initialize session
+    session.update(
+        analysis_on=False,
+        routines=jsonpickle.encode(routines)
+    )
     # Register Sijax upload handlers
     form_init_js = ''
     form_init_js += g.sijax.register_upload_callback('add-routine-form', add_routine)

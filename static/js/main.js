@@ -4,7 +4,6 @@ var paused = false; // whether analysis was just paused
 var timeElapsed = 0; // time elapsed on timer
 var timerID = -1;
 var max_dims = [0.5 * $(document).width(), 0.5 * $(document).height()]; // maximum plot size
-var selected_files = [];
 
 $(document).ready(function () {
     $("#plots-container").sortable({
@@ -15,17 +14,11 @@ $(document).ready(function () {
         scrollSnapX: 5,
         scrollAmount: 25,
         selected: function(event, ui) {
-            selected_files.push(ui.selected.id);
-            if (ui.selected.classList.contains("running")) {
-                $("#stop-routine").removeClass("inactive");
-            } else {
-                $("#run-routine").removeClass("inactive");
-            }
+            update_routine_buttons();
         }, start: function(event, ui) {
-            selected_files = [];
             $("#remove-routine, #unselect, #run-routine, #stop-routine").addClass("inactive");
         }, stop: function(event, ui) {
-            if (!(selected_files.length === 0)) {
+            if (!($("#routine-list .ui-selected").length === 0)) {
                 $("#remove-routine, #unselect").removeClass("inactive");
             }
         }
@@ -328,9 +321,10 @@ $("#toggle-grid").on("click", function () {
 $("#remove-routine").on("click", function () {
     if (!$(this).hasClass("inactive")) {
         $("#remove-routine, #unselect, #run-routine, #stop-routine").addClass("inactive");
-        $.each(selected_files, function(index, file_id) {
-            $("#routine-list #" + file_id).remove();
-        });
+        var selected_files = $("#routine-list .ui-selected").map(function() {
+            $(this).remove();
+            return this.id;
+        }).get();
         Sijax.request("remove_routine", [selected_files]);
     }
 });
@@ -338,7 +332,6 @@ $("#remove-routine").on("click", function () {
 function unselect() {
     $(".ui-selected").removeClass("ui-selected");
     $("#remove-routine, #unselect, #run-routine, #stop-routine").addClass("inactive");
-    selected_files = [];
 }
 
 $("#unselect").on("click", function () {
@@ -375,18 +368,25 @@ $("#filter").on("keyup", function() {
 
 $("#run-routine").on("click", function() {
     if (!$(this).hasClass("inactive")) {
-        $.each(selected_files, function(index, file_id) {
-            if (!$("#" + file_id).hasClass("running")) {
-                sjxComet.request("run_routine", [file_id]);
+        $("#routine-list .ui-selected").each(function () {
+            if (!$(this).hasClass("running")) {
+                $(this).removeClass("error");
+                $(this).addClass("running");
+                $("#status").append("Running '" + $(this).text() + "'.<br>");
+                Sijax.request("run_routine", [this.id]);
             }
         });
-        $("#stop-routine").removeClass("inactive");
+        update_routine_buttons();
     }
 });
 
 $("#stop-routine").on("click", function() {
     if (!$(this).hasClass("inactive")) {
+        var selected_files = $("#routine-list .ui-selected").map(function() {
+            return this.id;
+        }).get();
         Sijax.request("stop_routine", [selected_files]);
+        update_routine_buttons();
     }
 });
 
@@ -401,13 +401,32 @@ $("#slider-status-size").slider({
     }
 });
 
-function adjust_routine_class(id, running, error) {
-    if (running) {
-        $("#" + id).addClass("running");
+function adjust_routine_class(id, error) {
+    var routine = $("#" + id);
+    routine.removeClass("running");
+    if (error) {
+        routine.addClass("error");
+    }
+    update_routine_buttons();
+}
+
+function update_routine_buttons() {
+    var selected = $("#routine-list .ui-selected");
+    if (selected.hasClass("running")) {
+        $("#stop-routine").removeClass("inactive"); // some selected routines running
     } else {
-        $("#" + id).removeClass("running");
-        if (error) {
-            $("#" + id).addClass("error");
-        }
+        $("#stop-routine").addClass("inactive"); // all selected routines not running
+    }
+    if (selected.not(".running").length > 0) {
+        $("#run-routine").removeClass("inactive"); // some selected routines not running
+    } else {
+        $("#run-routine").addClass("inactive"); // all selected routines running
     }
 }
+
+$(window).bind("beforeunload", function() {
+    var all_files = $("#routine-list").children().map(function() {
+        return this.id;
+    }).get();
+    Sijax.request("stop_routine", [all_files]);
+});
