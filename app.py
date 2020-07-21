@@ -6,29 +6,34 @@ import flask_sijax
 import time
 import numpy as np
 from werkzeug import secure_filename
-from pymemcache.client.base import Client
+from database import *
 from plots import *
 
 # initialize and configure Flask
 app = Flask(__name__)
 sijax_path = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
-client = Client(('127.0.0.1', 11211))
 app.config.update(
     SIJAX_STATIC_PATH=sijax_path,
     SIJAX_JSON_URI='/static/js/sijax/json2.js',
     UPLOAD_FOLDER=os.path.join(app.root_path, "uploads"),
-    CACHE_TYPE="memcached",
+    CACHE_TYPE="simple",
     CACHE_DEFAULT_TIMEOUT=999999999,
-    CACHE_THRESHOLD=999999999,
-    CACHE_MEMCACHED_SERVERS=client
+    CACHE_THRESHOLD=999999999
 )
 flask_sijax.Sijax(app)
 cache = Cache(app)
+# initialize database
+init_db()
 
 
 # set global variables
 PLOT_DATA_PATH = os.path.join(app.root_path, "plot_data")
 ROUTINES_PATH = os.path.join(app.root_path, "routines")
+
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db_session.remove()
 
 
 # do one analysis iteration
@@ -50,18 +55,17 @@ def analysis_step(obj_response):
                     yield obj_response
                 else:
                     obj = obj_types[plot_data["type"]](plot_data)
-                    if obj.id not in [plot["id"] for plot in g.current_plots]:
-                        if not obj.file in [plot["file"] for plot in g.current_plots]: # Check if data is from a new routine
+                    if obj.id not in [plot["id"] for plot in cache.get("current_plots")]:
+                        if not obj.file in [plot["file"] for plot in cache.get("current_plots")]: # Check if data is from a new routine
                             report_status(obj_response, "status", "Receiving data from '%s'." % obj.file)
                             yield from obj.create_routine(obj_response)
                         yield from obj.create(obj_response)
-                        g.current_plots.append(dict(file=obj.file, id=obj.id))
+                        cache.set("current_plots", cache.get("current_plots") + [dict(file=obj.file, id=obj.id)])
                     else:
                         yield from obj.update(obj_response)
 
 
 def add_routine(obj_response, files, form_values):
-    routines = cache.get("routines")
     if "routine" not in files:
         report_status(obj_response, "status", "Upload unsuccessful.")
         return
@@ -73,14 +77,15 @@ def add_routine(obj_response, files, form_values):
         report_status(obj_response, "status", "'%s' is not a Python script." % filename)
     elif filename != secure_filename(filename):
         report_status(obj_response, "status", "File name '%s' is not secure." % filename)
-    elif filename in [routine.name for routine in routines]:
+    elif filename in routine_names():
         report_status(obj_response, "status", "A routine with the name '%s' already exists." % filename)
     else:
-        routines.append(Routine(app.config["UPLOAD_FOLDER"], filename))
+        routine = Routine(app.config["UPLOAD_FOLDER"], filename)
+        db_session.add(routine)
+        db_session.commit()
         file_data.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        obj_response.html_append("#routine-list", "<li class='routine' id='%s'>%s</li>" % (routines[-1].id, filename))
+        obj_response.html_append("#routine-list", "<li class='routine' id='%s'>%s</li>" % (routine.file_id, filename))
         report_status(obj_response, "status", "Upload of '%s' successful." % filename)
-    cache.set("routines", routines)
 
 
 class SijaxHandlers(object):
@@ -101,45 +106,41 @@ class SijaxHandlers(object):
 
     @staticmethod
     def remove_routine(obj_response, file_ids):
-        routines = cache.get("routines")
         filenames = []
         for file_id in file_ids:
-            routine = [routine for routine in routines if routine.id == file_id][0]
+            routine = get_routines(file_id=file_id)
             filename = routine.name
             filenames.append(filename)
             try:
                 os.remove(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             except FileNotFoundError:
                 report_status(obj_response, "status", "Unable to locate '%s'." % filename)
-            routines = [routine for routine in routines if routine.id != file_id]
+            db_session.delete(routine)
         if len(file_ids) > 3:
             report_status(obj_response, "status", "%s routines removed." % len(file_ids))
         else:
-            report_status(obj_response, "status", "%s removed." % ", ".join(filenames))
-        cache.set("routines", routines)
+            report_status(obj_response, "status", "'%s' removed." % "', '".join(filenames))
+        db_session.commit()
 
     @staticmethod
     def stop_routine(obj_response, file_ids):
-        routines = cache.get("routines")
         for file_id in file_ids:
-            routine = [routine for routine in routines if routine.id == file_id][0]
-            print(routine.pid)
+            routine = get_routines(file_id=file_id)
             if routine.running:
-                routine.stop(obj_response, user_init=True)
-        cache.set("routines", routines)
+                routine.stop(obj_response)
+        db_session.commit()
 
     @staticmethod
     def run_routine(obj_response, file_id):
-        routines = cache.get("routines")
-        routine = [routine for routine in routines if routine.id == file_id][0]
+        routine = get_routines(file_id=file_id)
         p = routine.start()
-        cache.set("routines", routines)
+        db_session.commit()
         p.wait()
         if routine.running:
             stdout, stderr = p.communicate()
             routine.running = False
             routine.report(obj_response, stdout)
-        cache.set("routines", routines)
+        db_session.commit()
 
 class SijaxCometHandlers(object):
 
@@ -152,7 +153,7 @@ class SijaxCometHandlers(object):
         else:
             report_status(obj_response, "status", "Analysis started")
             remove_plots(obj_response)
-            g.current_plots = []
+            cache.set("current_plots", [])
             for plot_data_file in os.listdir(PLOT_DATA_PATH):
                 os.remove(os.path.join(PLOT_DATA_PATH, plot_data_file))
         obj_response.call("start_timer") # start the timer
@@ -174,10 +175,15 @@ class SijaxCometHandlers(object):
 def main():
     """Generate the main page."""
     filenames = os.listdir(app.config["UPLOAD_FOLDER"])
-    routines = [Routine(app.config["UPLOAD_FOLDER"], filename) for filename in filenames]
-    routines_dict = {routine.id: routine.name for routine in routines}
-    # initialize cache
-    cache.set("routines", routines)
+    routines_dict = {}
+    for filename in filenames:
+        if get_routines(name=filename) is None:
+            routine = Routine(app.config["UPLOAD_FOLDER"], filename)
+            db_session.add(routine)
+        else:
+            routine = get_routines(name=filename)
+        routines_dict[routine.file_id] = routine.name
+    db_session.commit()
     cache.set("analysis_on", False)
     # Register Sijax upload handlers
     form_init_js = ''
@@ -186,7 +192,7 @@ def main():
         g.sijax.register_object(SijaxHandlers) # Register Sijax handlers
         g.sijax.register_comet_object(SijaxCometHandlers) # Register Sijax comet handlers
         return g.sijax.process_request()
-    return render_template('main.html', form_init_js=form_init_js, routines=routines_dict) # Render template
+    return render_template("main.html", form_init_js=form_init_js, routines=routines_dict) # Render template
 
 
 app.run(threaded=True, debug=True) # run the flask app with threads in debug mode
