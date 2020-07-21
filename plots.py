@@ -1,5 +1,5 @@
 
-import json, uuid, subprocess, os
+import json, uuid, subprocess, os, psutil
 from html import escape
 
 
@@ -90,26 +90,33 @@ class Routine(object):
         self.path = os.path.join(folder, filename)
         self.id = gen_id("f", filename)
         self.running = False
-        self.process = None
+        self.pid = None
 
-    def stop(self, obj_response, user_init=False):
-        self.running = False
-        if user_init:
-            self.process.terminate()
-            obj_response.call("adjust_routine_class", [self.id, False])
-            report_status(obj_response, "status", "'%s' terminated successfully." % self.name)
+    def report(self, obj_response, stdout):
+        if "Error" in stdout.decode("utf-8"):
+            obj_response.call("adjust_routine_class", [self.id, True])
+            report_status(obj_response, "status", "'%s' error: '%s'." % (self.name, stdout.decode("utf-8")))
         else:
-            stdout, stderr = self.process.communicate()
-            if "Error" in stdout.decode("utf-8"):
-                obj_response.call("adjust_routine_class", [self.id, True])
-                report_status(obj_response, "status", "'%s' error: '%s'." % (self.name, stdout.decode("utf-8")))
-            else:
-                obj_response.call("adjust_routine_class", [self.id, False])
-                report_status(obj_response, "status", "'%s' completed successfully." % self.name)
+            obj_response.call("adjust_routine_class", [self.id, False])
+            report_status(obj_response, "status", "'%s' completed successfully." % self.name)
+
+    def stop(self, obj_response):
+        self.running = False
+        self.process.terminate()
+        obj_response.call("adjust_routine_class", [self.id, False])
+        report_status(obj_response, "status", "'%s' terminated successfully." % self.name)
+
 
     def start(self):
-        self.process = subprocess.Popen(["python", self.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p = subprocess.Popen(["python", self.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.pid = p.pid
         self.running = True
+        return p
+
+    @property
+    def process(self):
+        if self.pid:
+            return psutil.Process(self.pid)
 
 
 obj_types = {"plot": Plot, "table": Table, "image": Plot}

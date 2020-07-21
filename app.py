@@ -1,25 +1,29 @@
 
 # import modules
-from flask import Flask, render_template, g, session
+from flask import Flask, render_template, g
+from flask_caching import Cache
 import flask_sijax
-import os
 import time
 import numpy as np
 from werkzeug import secure_filename
-from werkzeug.contrib.cache import SimpleCache
+from pymemcache.client.base import Client
 from plots import *
 
 # initialize and configure Flask
 app = Flask(__name__)
-app.secret_key = gen_id("", "secret key")
 sijax_path = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
+client = Client(('127.0.0.1', 11211))
 app.config.update(
     SIJAX_STATIC_PATH=sijax_path,
     SIJAX_JSON_URI='/static/js/sijax/json2.js',
-    UPLOAD_FOLDER=os.path.join(app.root_path, "uploads")
+    UPLOAD_FOLDER=os.path.join(app.root_path, "uploads"),
+    CACHE_TYPE="memcached",
+    CACHE_DEFAULT_TIMEOUT=999999999,
+    CACHE_THRESHOLD=999999999,
+    CACHE_MEMCACHED_SERVERS=client
 )
 flask_sijax.Sijax(app)
-cache = SimpleCache()
+cache = Cache(app)
 
 
 # set global variables
@@ -84,7 +88,6 @@ class SijaxHandlers(object):
     @staticmethod
     def stop_analysis(obj_response):
         """Stop the analysis."""
-        print(session)
         cache.set("analysis_on", False)
         report_status(obj_response, "status", "Analysis stopped")
         obj_response.call("reset_timer")
@@ -92,7 +95,6 @@ class SijaxHandlers(object):
     @staticmethod
     def pause_analysis(obj_response):
         """Pause the analysis."""
-        print(session)
         cache.set("analysis_on", False)
         report_status(obj_response, "status", "Analysis paused")
         obj_response.call("stop_timer")
@@ -121,6 +123,7 @@ class SijaxHandlers(object):
         routines = cache.get("routines")
         for file_id in file_ids:
             routine = [routine for routine in routines if routine.id == file_id][0]
+            print(routine.pid)
             if routine.running:
                 routine.stop(obj_response, user_init=True)
         cache.set("routines", routines)
@@ -129,10 +132,13 @@ class SijaxHandlers(object):
     def run_routine(obj_response, file_id):
         routines = cache.get("routines")
         routine = [routine for routine in routines if routine.id == file_id][0]
-        routine.start()
-        routine.process.wait()
+        p = routine.start()
+        cache.set("routines", routines)
+        p.wait()
         if routine.running:
-            routine.stop(obj_response)
+            stdout, stderr = p.communicate()
+            routine.running = False
+            routine.report(obj_response, stdout)
         cache.set("routines", routines)
 
 class SijaxCometHandlers(object):
@@ -141,7 +147,6 @@ class SijaxCometHandlers(object):
     def analyse(obj_response, paused, period):
         """Start the analysis."""
         cache.set("analysis_on", True)
-        print(session)
         if paused:
             report_status(obj_response, "status", "Analysis restarted")
         else:
