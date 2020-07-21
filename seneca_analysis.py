@@ -7,15 +7,21 @@ import base64
 import inspect
 import os
 import numpy as np
+from time import time
+import sys
 
 
 # set global variables
 app_root_path = ""
 
 
+def add_support_path(support_path):
+    sys.path.append(support_path)
+
+
 class Analysis(object):
 
-    def __init__(self, interactive=False):
+    def __init__(self, interactive=False, save=False, save_path=None):
         self.data = []
         self.interactive = interactive
         if interactive:
@@ -24,6 +30,13 @@ class Analysis(object):
             frame = inspect.stack()[1]
             self.filename = os.path.basename(frame[0].f_code.co_filename)
         self.data_path = os.path.join(self.get_app_root_path(), "plot_data", os.path.splitext(self.filename)[0])
+        self.save = save
+        if save:
+            if save_path:
+                self.save_path = save_path
+            else:
+                print("Warning: Save path not defined. Using current working directory.")
+                self.save_path = os.getcwd()
 
     def get_app_root_path(self):
         """
@@ -132,7 +145,7 @@ class Analysis(object):
             self.end()
             raise ValueError(msg)
 
-    def plot(self, name, description=""):
+    def plot(self, name, description="", save_name=None):
         """
         Send the current matplotlib plot to the analysis app.
 
@@ -147,6 +160,11 @@ class Analysis(object):
             name (str): A name to associate with the plot in the analysis app.
             description (str): A description of the plot.
         """
+        if self.save:
+            if not save_name:
+                save_name = "%s-%s.png" % (name, time())
+            full_save_path = os.path.join(self.save_path, save_name)
+            plt.savefig(full_save_path)
         plt.annotate("%s (%s)" % (name, self.filename), xy=(0, 0), xycoords='figure fraction')  # annotate plot with file name and plot name
         # encode the plot as a base64 string
         img = BytesIO()
