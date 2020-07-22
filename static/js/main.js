@@ -15,12 +15,8 @@ $(document).ready(function () {
         scrollAmount: 25,
         selected: function(event, ui) {
             update_routine_buttons();
-        }, start: function(event, ui) {
-            $("#remove-routine, #unselect, #run-routine, #stop-routine").addClass("inactive");
         }, stop: function(event, ui) {
-            if (!($("#routine-list .ui-selected").length === 0)) {
-                $("#remove-routine, #unselect").removeClass("inactive");
-            }
+            update_routine_buttons();
         }
     });
 });
@@ -320,22 +316,28 @@ $("#toggle-grid").on("click", function () {
 
 $("#remove-routine").on("click", function () {
     if (!$(this).hasClass("inactive")) {
-        $("#remove-routine, #unselect, #run-routine, #stop-routine").addClass("inactive");
         var selected_files = $("#routine-list .ui-selected").map(function() {
             $(this).remove();
             return this.id;
         }).get();
         Sijax.request("remove_routine", [selected_files]);
+        update_routine_buttons();
     }
 });
 
 function unselect() {
     $(".ui-selected").removeClass("ui-selected");
-    $("#remove-routine, #unselect, #run-routine, #stop-routine").addClass("inactive");
+    update_routine_buttons();
 }
 
-$("#unselect").on("click", function () {
-    if (!$("this").hasClass("inactive")) {
+$("#toggle-select").on("click", function () {
+    $(this).toggleClass("checked");
+    if ($(this).hasClass("checked")) {
+        $("#routine-list li").addClass("ui-selected");
+        $(this).text("check_box");
+        update_routine_buttons();
+    } else {
+        $(this).text("check_box_outline_blank");
         unselect();
     }
 });
@@ -412,6 +414,15 @@ function adjust_routine_class(id, error) {
 
 function update_routine_buttons() {
     var selected = $("#routine-list .ui-selected");
+    if (selected.length === 0) {
+        $("#remove-routine").addClass("inactive");
+        $("#toggle-select").removeClass("checked");
+        $("#toggle-select").text("check_box_outline_blank");
+    } else {
+        $("#remove-routine").removeClass("inactive");
+        $("#toggle-select").addClass("checked");
+        $("#toggle-select").text("check_box");
+    }
     if (selected.hasClass("running")) {
         $("#stop-routine").removeClass("inactive"); // some selected routines running
     } else {
