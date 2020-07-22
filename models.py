@@ -20,15 +20,6 @@ def routine_names():
         yield routine.name
 
 
-def update_current_plots(current_plots):
-    misc = Misc.query.first()
-    misc.current_plots = current_plots
-    flag_modified(misc, "current_plots")
-    db.session.merge(misc)
-    db.session.flush()
-    db.session.commit()
-
-
 class Routine(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
@@ -76,9 +67,17 @@ class Misc(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     analysis_on = db.Column(db.Boolean)
-    current_plots = db.Column(db.JSON)
 
     def __init__(self):
         self.analysis_on = False
-        self.current_plots = []
 
+
+class CurrentPlot(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    file = db.Column(db.String)
+    plot_id = db.Column(db.String)
+
+    def __init__(self, file, plot_id):
+        self.file = file
+        self.plot_id = plot_id
