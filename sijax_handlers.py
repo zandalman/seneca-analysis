@@ -7,6 +7,7 @@ from models import *
 
 # do one analysis iteration
 def analysis_step(app, obj_response):
+    current_plots = Misc.query.first().current_plots
     for plot_data_file in os.listdir(app.config["PLOT_DATA_FOLDER"]):
         plot_data_file_path = os.path.join(app.config["PLOT_DATA_FOLDER"], plot_data_file)
         if os.path.getsize(plot_data_file_path) > 0:  # ignore empty files
@@ -24,15 +25,15 @@ def analysis_step(app, obj_response):
                     yield obj_response
                 else:
                     obj = obj_types[plot_data["type"]](plot_data)
-                    if obj.id not in [plot["id"] for plot in Misc.query.first().current_plots]:
-                        if not obj.file in [plot["file"] for plot in Misc.query.first().current_plots]: # check if data is from a new routine
+                    if obj.id not in [plot["id"] for plot in current_plots]:
+                        if obj.file not in [plot["file"] for plot in current_plots]: # check if data is from a new routine
                             report_status(obj_response, "status", "Receiving data from '%s'." % obj.file)
                             yield from obj.create_routine(obj_response)
                         yield from obj.create(obj_response)
-                        Misc.query.first().current_plots.append(dict(file=obj.file, id=obj.id))
-                        db.session.commit()
+                        current_plots.append(dict(file=obj.file, id=obj.id))
                     else:
                         yield from obj.update(obj_response)
+    update_current_plots(current_plots)
 
 class Handlers(object):
 
@@ -42,7 +43,6 @@ class Handlers(object):
 class SijaxUploadHandlers(Handlers):
 
     def add_routine(self, obj_response, files, form_values):
-        print("test")
         if "routine" not in files:
             report_status(obj_response, "status", "Upload unsuccessful.")
             return
@@ -57,7 +57,6 @@ class SijaxUploadHandlers(Handlers):
         elif filename in routine_names():
             report_status(obj_response, "status", "A routine with the name '%s' already exists." % filename)
         else:
-            print("test")
             routine = Routine(self.app.config["UPLOAD_FOLDER"], filename)
             db.session.add(routine)
             db.session.commit()
@@ -77,6 +76,7 @@ class SijaxHandlers(Handlers):
 
     def pause_analysis(self, obj_response):
         """Pause the analysis."""
+        print(Misc.query.first().current_plots)
         Misc.query.first().analysis_on = False
         db.session.commit()
         report_status(obj_response, "status", "Analysis paused")
@@ -125,11 +125,13 @@ class SijaxCometHandlers(Handlers):
         db.session.commit()
         if paused:
             report_status(obj_response, "status", "Analysis restarted")
+            current_plots = Misc.query.first().current_plots
+            update_current_plots(current_plots)
         else:
             report_status(obj_response, "status", "Analysis started")
             remove_plots(obj_response)
-            Misc.query.first().current_plots = []
-            db.session.commit()
+            current_plots = []
+            update_current_plots(current_plots)
             for plot_data_file in os.listdir(self.app.config["PLOT_DATA_FOLDER"]):
                 os.remove(os.path.join(self.app.config["PLOT_DATA_FOLDER"], plot_data_file))
         obj_response.call("start_timer") # start the timer
@@ -142,6 +144,6 @@ class SijaxCometHandlers(Handlers):
             if period > step_time:
                 time.sleep(period - step_time)
             else:
-                if give_warning: # Check if warning has already been given for this routine
+                if give_warning: # Check if warning has already been given
                     report_status(obj_response, "status", "Warning: Period is shorter than execution time by %.3g seconds" % (step_time - period))
                     give_warning = False

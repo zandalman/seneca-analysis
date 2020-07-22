@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm.attributes import flag_modified
 import psutil
 import subprocess
 import os
@@ -17,6 +18,15 @@ def get_routines(**kwargs):
 def routine_names():
     for routine in Routine.query.all():
         yield routine.name
+
+
+def update_current_plots(current_plots):
+    misc = Misc.query.first()
+    misc.current_plots = current_plots
+    flag_modified(misc, "current_plots")
+    db.session.merge(misc)
+    db.session.flush()
+    db.session.commit()
 
 
 class Routine(db.Model):
@@ -71,6 +81,4 @@ class Misc(db.Model):
     def __init__(self):
         self.analysis_on = False
         self.current_plots = []
-
-
 

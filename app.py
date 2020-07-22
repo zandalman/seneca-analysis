@@ -30,7 +30,7 @@ def create_app():
         PLOT_DATA_FOLDER=os.path.join(app.root_path, "plot_data"),
         SESSION_TYPE="sqlalchemy",
         SQLALCHEMY_DATABASE_URI="sqlite:///%s" % os.path.join(app.root_path, "data.db"),
-        SQLALCHEMY_TRACK_MODIFICATIONS=False
+        SQLALCHEMY_TRACK_MODIFICATIONS=True
     )
     flask_sijax.Sijax(app) # add flask-sijax
     db.init_app(app) # initialize the database
