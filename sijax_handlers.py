@@ -1,7 +1,6 @@
 
 import numpy as np
 import time
-from flask import session
 from werkzeug import secure_filename
 from plots import *
 from models import *
@@ -25,13 +24,13 @@ def analysis_step(app, obj_response):
                     yield obj_response
                 else:
                     obj = obj_types[plot_data["type"]](plot_data)
-                    if obj.id not in [plot["id"] for plot in session.get("current_plots", [])]:
-                        if not obj.file in [plot["file"] for plot in session.get("current_plots", [])]: # check if data is from a new routine
+                    if obj.id not in [plot["id"] for plot in Misc.query.first().current_plots]:
+                        if not obj.file in [plot["file"] for plot in Misc.query.first().current_plots]: # check if data is from a new routine
                             report_status(obj_response, "status", "Receiving data from '%s'." % obj.file)
                             yield from obj.create_routine(obj_response)
                         yield from obj.create(obj_response)
-                        session["current_plots"].append(dict(file=obj.file, id=obj.id))
-                        session.modified = True
+                        Misc.query.first().current_plots.append(dict(file=obj.file, id=obj.id))
+                        db.session.commit()
                     else:
                         yield from obj.update(obj_response)
 
@@ -71,13 +70,15 @@ class SijaxHandlers(Handlers):
 
     def stop_analysis(self, obj_response):
         """Stop the analysis."""
-        session["analysis_on"] = False
+        Misc.query.first().analysis_on = False
+        db.session.commit()
         report_status(obj_response, "status", "Analysis stopped")
         obj_response.call("reset_timer")
 
     def pause_analysis(self, obj_response):
         """Pause the analysis."""
-        session["analysis_on"] = False
+        Misc.query.first().analysis_on = False
+        db.session.commit()
         report_status(obj_response, "status", "Analysis paused")
         obj_response.call("stop_timer")
 
@@ -120,20 +121,21 @@ class SijaxCometHandlers(Handlers):
 
     def analyse(self, obj_response, paused, period):
         """Start the analysis."""
-        session["analysis_on"] = True
+        Misc.query.first().analysis_on = True
+        db.session.commit()
         if paused:
             report_status(obj_response, "status", "Analysis restarted")
         else:
             report_status(obj_response, "status", "Analysis started")
             remove_plots(obj_response)
-            session["current_plots"] = []
-            session.modified = True
+            Misc.query.first().current_plots = []
+            db.session.commit()
             for plot_data_file in os.listdir(self.app.config["PLOT_DATA_FOLDER"]):
                 os.remove(os.path.join(self.app.config["PLOT_DATA_FOLDER"], plot_data_file))
         obj_response.call("start_timer") # start the timer
         yield obj_response
         give_warning = True
-        while session.get("analysis_on", False):
+        while Misc.query.first().analysis_on:
             step_start_time = time.time()
             yield from analysis_step(self.app, obj_response)
             step_time = time.time() - step_start_time

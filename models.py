@@ -6,15 +6,18 @@ from plots import report_status, gen_id
 
 db = SQLAlchemy()
 
+
 def get_routines(**kwargs):
     res = Routine.query
     for key, value in kwargs.items():
         res = res.filter(getattr(Routine, key) == value)
     return res.first()
 
+
 def routine_names():
     for routine in Routine.query.all():
         yield routine.name
+
 
 class Routine(db.Model):
 
@@ -57,3 +60,17 @@ class Routine(db.Model):
     def process(self):
         if self.pid:
             return psutil.Process(self.pid)
+
+
+class Misc(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    analysis_on = db.Column(db.Boolean)
+    current_plots = db.Column(db.JSON)
+
+    def __init__(self):
+        self.analysis_on = False
+        self.current_plots = []
+
+
+
