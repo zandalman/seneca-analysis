@@ -2,9 +2,11 @@
 import numpy as np
 import time
 from werkzeug import secure_filename
-from flask import g
 from plots import *
 from models import *
+
+
+analysis_on = False
 
 
 class Handlers(object):
@@ -12,19 +14,11 @@ class Handlers(object):
     def __init__(self, app):
         self.app = app
 
-    @property
-    def analysis_on(self):
-        return Misc.query.first().analysis_on
 
-    @analysis_on.setter
-    def analysis_on(self, value):
-        Misc.query.first().analysis_on = value
-        db.session.commit()
-
-
-class Analysis(Handlers):
+class Analysis(object):
 
     def __init__(self, app, paused, period, plots):
+        global analysis_on
         self.app = app
         self.paused = paused
         self.period = period
@@ -34,7 +28,7 @@ class Analysis(Handlers):
             self.plots = []
         self.warn = True
         self.start_time = time.time()
-        self.analysis_on = True
+        analysis_on = True
 
     def start(self, obj_response):
         if self.paused:
@@ -116,13 +110,15 @@ class SijaxHandlers(Handlers):
 
     def stop_analysis(self, obj_response):
         """Stop the analysis."""
-        self.analysis_on = False
+        global analysis_on
+        analysis_on = False
         report_status(obj_response, "status", "Analysis stopped")
         obj_response.call("reset_timer")
 
     def pause_analysis(self, obj_response):
         """Pause the analysis."""
-        self.analysis_on = False
+        global analysis_on
+        analysis_on = False
         report_status(obj_response, "status", "Analysis paused")
         obj_response.call("stop_timer")
 
@@ -167,5 +163,5 @@ class SijaxCometHandlers(Handlers):
         """Start the analysis."""
         analysis = Analysis(self.app, paused, period, current_plots)
         yield from analysis.start(obj_response)
-        while self.analysis_on:
+        while analysis_on:
             yield from analysis.step(obj_response)
