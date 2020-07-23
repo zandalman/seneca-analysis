@@ -17,6 +17,7 @@ def init_db():
         routines_dict[routine.file_id] = routine.name
     Misc.query.delete()
     db.session.add(Misc())
+    CurrentPlot.query.delete()
     return routines_dict
 
 
@@ -44,7 +45,7 @@ def create_app():
         routines_dict = init_db()
         db.session.commit()
         # Register Sijax upload handlers
-        form_init_js = ''
+        form_init_js = ""
         form_init_js += g.sijax.register_upload_callback("add-routine-form", SijaxUploadHandlers(app).add_routine)
         if g.sijax.is_sijax_request:
             g.sijax.register_object(SijaxHandlers(app))  # Register Sijax handlers

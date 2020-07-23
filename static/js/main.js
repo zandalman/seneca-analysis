@@ -4,6 +4,7 @@ var paused = false; // whether analysis was just paused
 var timeElapsed = 0; // time elapsed on timer
 var timerID = -1;
 var max_dims = [0.5 * $(document).width(), 0.5 * $(document).height()]; // maximum plot size
+var ctrl_pressed = false;
 
 $(document).ready(function () {
     $("#plots-container").sortable({
@@ -342,6 +343,19 @@ $("#toggle-select").on("click", function () {
     }
 });
 
+window.addEventListener("keyup", function (event) {
+    if (event.defaultPrevented) {
+        return;
+    }
+    switch (event.key) {
+        case "Meta":
+           ctrl_pressed = false;
+           break;
+        default:
+            return;
+    }
+});
+
 window.addEventListener("keydown", function (event) {
     if (event.defaultPrevented) {
         return;
@@ -349,12 +363,24 @@ window.addEventListener("keydown", function (event) {
     switch (event.key) {
         case "Escape": // unselect items
             unselect();
+            event.preventDefault();
             break;
+        case "4":
+            if (ctrl_pressed) {
+                $("#run-routine").trigger("click");
+                event.preventDefault();
+                break;
+            } else {
+                return;
+            }
+        case "Meta":
+            ctrl_pressed = true;
+            return;
         default:
             return;
     }
-    event.preventDefault();
-    }, true);
+});
+
 
 $("#filter").on("keyup", function() {
     unselect();

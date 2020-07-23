@@ -62,6 +62,7 @@ class SijaxUploadHandlers(Handlers):
             file_data.save(os.path.join(self.app.config["UPLOAD_FOLDER"], filename))
             obj_response.html_append("#routine-list", "<li class='routine' id='%s'>%s</li>" % (routine.file_id, filename))
             report_status(obj_response, "status", "Upload of '%s' successful." % filename)
+        obj_response.attr("#routine-upload", "value", "")
 
 
 class SijaxHandlers(Handlers):
