@@ -15,8 +15,38 @@ import sys
 app_root_path = ""
 
 
-def add_support_path(support_path):
-    sys.path.append(support_path)
+def add_support_paths(*args):
+    for arg in args:
+        sys.path.append(arg)
+
+
+class Series(object):
+
+    def __init__(self, name, time):
+        self.name = name
+        self.time = time
+        self.data = []
+        self.times = []
+        self.start_time = self.now
+
+    def get(self, *args):
+        self.data += args
+        if self.time:
+            self.times += [self.start_time - self.now] * len(args)
+            return self.times, self.data
+        return self.data
+
+    def time_series_plot(self, pnts=10, *args, **kwargs):
+        plt.plot(self.times, self.data, *args, **kwargs)
+        plt.xlim(max(0, self.num - pnts), self.num + pnts)
+
+    @property
+    def now(self):
+        return time()
+
+    @property
+    def num(self):
+        return len(self.data)
 
 
 class Analysis(object):
@@ -37,6 +67,7 @@ class Analysis(object):
             else:
                 print("Warning: Save path not defined. Using current working directory.")
                 self.save_path = os.getcwd()
+        self.series = {}
 
     def get_app_root_path(self):
         """
@@ -145,7 +176,7 @@ class Analysis(object):
             self.end()
             raise ValueError(msg)
 
-    def plot(self, name, description="", save_name=None):
+    def plot(self, name, description="", save_name=None, no_save=False):
         """
         Send the current matplotlib plot to the analysis app.
 
@@ -160,7 +191,7 @@ class Analysis(object):
             name (str): A name to associate with the plot in the analysis app.
             description (str): A description of the plot.
         """
-        if self.save:
+        if self.save and not no_save:
             if not save_name:
                 save_name = "%s-%s.png" % (name, time())
             full_save_path = os.path.join(self.save_path, save_name)
@@ -174,3 +205,7 @@ class Analysis(object):
         self.data.append(dict(type="plot", file=self.filename, name=name, description=description, url=url))
         plt.clf()
 
+    def init_series(self, name, time=False):
+        ser = Series(name, time)
+        self.series[name] = ser
+        return ser

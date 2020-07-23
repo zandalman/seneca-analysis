@@ -49,7 +49,7 @@ class Analysis(object):
             time.sleep(self.period - step_time)
         else:
             if self.warn:  # Check if warning has already been given
-                report_status(obj_response, "status", "Warning: Period is shorter than execution time by %.3g seconds" % (step_time - period))
+                report_status(obj_response, "status", "Warning: Period is shorter than execution time by %.3g seconds" % (step_time - self.period))
                 self.warn = False
 
     def update(self, obj_response):
