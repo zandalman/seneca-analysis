@@ -9,15 +9,14 @@ def init_db():
     filenames = os.listdir(app.config["UPLOAD_FOLDER"])
     routines_dict = {}
     for filename in filenames:
-        if get_routines(name=filename) is None:
+        if get_objects(Routine, count=True, name=filename) == 0:
             routine = Routine(app.config["UPLOAD_FOLDER"], filename)
             db.session.add(routine)
         else:
-            routine = get_routines(name=filename)
+            routine = get_objects(Routine, name=filename)[0]
         routines_dict[routine.file_id] = routine.name
     Misc.query.delete()
     db.session.add(Misc())
-    CurrentPlot.query.delete()
     return routines_dict
 
 

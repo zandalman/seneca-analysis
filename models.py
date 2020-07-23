@@ -8,11 +8,14 @@ from plots import report_status, gen_id
 db = SQLAlchemy()
 
 
-def get_routines(**kwargs):
-    res = Routine.query
+def get_objects(obj, count=False, **kwargs):
+    res = obj.query
     for key, value in kwargs.items():
-        res = res.filter(getattr(Routine, key) == value)
-    return res.first()
+        res = res.filter(getattr(obj, key) == value)
+    if count:
+        return res.count()
+    else:
+        return res.all()
 
 
 def routine_names():
@@ -71,13 +74,3 @@ class Misc(db.Model):
     def __init__(self):
         self.analysis_on = False
 
-
-class CurrentPlot(db.Model):
-
-    id = db.Column(db.Integer, primary_key=True)
-    file = db.Column(db.String)
-    plot_id = db.Column(db.String)
-
-    def __init__(self, file, plot_id):
-        self.file = file
-        self.plot_id = plot_id

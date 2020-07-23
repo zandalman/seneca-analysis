@@ -116,7 +116,13 @@ function update_img(url, container) {
 $("#start-analysis").on("click", function () {
     if (!$(this).hasClass("inactive")) {
         var period = parseFloat($("#period").val());
-        sjxComet.request("analyse", [paused, period]);
+        var current_plots = $("#plot-list .plot-list-item").map(function() {
+            return {
+                "id": this.dataset.id,
+                "file": this.parentNode.id
+            };
+        }).get();
+        sjxComet.request("analyse", [paused, period, current_plots]);
         $("#start-analysis").addClass("inactive");
         $("#stop-analysis, #pause-analysis").removeClass("inactive");
         $("#slider").slider("disable");
