@@ -1,9 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm.attributes import flag_modified
-import psutil
-import subprocess
-import os
-from plots import report_status, gen_id
+import os, html, subprocess, psutil
+from plots import gen_id
 
 db = SQLAlchemy()
 
@@ -16,6 +13,15 @@ def get_objects(obj, count=False, **kwargs):
         return res.count()
     else:
         return res.all()
+
+
+def report_status(obj_response, container_id, msg):
+    """Send a message to an HTML element."""
+    obj_response.html_append("#%s" % container_id, "%s<br/>" % html.escape(msg))
+    log_path = get_objects(Misc)[0].log_path
+    if log_path:
+        with open(log_path, "a+") as f:
+            f.write(msg + "\n")
 
 
 def routine_names():
@@ -41,18 +47,28 @@ class Routine(db.Model):
 
     def report(self, obj_response, stdout):
         if "Error" in stdout.decode("utf-8"):
-            obj_response.call("adjust_routine_class", [self.file_id, True])
+            obj_response.call("adjust_routine_class", [self.file_id, "error"])
             report_status(obj_response, "status", "'%s' error: '%s'." % (self.name, stdout.decode("utf-8")))
         else:
-            obj_response.call("adjust_routine_class", [self.file_id, False])
+            obj_response.call("adjust_routine_class", [self.file_id, None])
             report_status(obj_response, "status", "'%s' completed successfully." % self.name)
 
     def stop(self, obj_response):
         self.running = False
         self.process.terminate()
         self.process.kill()
-        obj_response.call("adjust_routine_class", [self.file_id, False])
+        obj_response.call("adjust_routine_class", [self.file_id, None])
         report_status(obj_response, "status", "'%s' terminated successfully." % self.name)
+
+    def pause(self, obj_response):
+        self.process.suspend()
+        obj_response.call("adjust_routine_class", [self.file_id, "paused"])
+        report_status(obj_response, "status", "'%s' paused." % self.name)
+
+    def resume(self, obj_response):
+        self.process.resume()
+        obj_response.call("adjust_routine_class", [self.file_id, "running"])
+        report_status(obj_response, "status", "'%s' resumed." % self.name)
 
     def start(self):
         p = subprocess.Popen(["python", self.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -69,8 +85,7 @@ class Routine(db.Model):
 class Misc(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
-    analysis_on = db.Column(db.Boolean)
+    log_path = db.Column(db.String)
 
     def __init__(self):
-        self.analysis_on = False
-
+        self.log_path = None

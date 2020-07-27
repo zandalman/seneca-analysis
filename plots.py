@@ -12,11 +12,6 @@ def remove_plots(obj_response):
     obj_response.html("#plots-container, #plot-list", "")
 
 
-def report_status(obj_response, container_id, msg):
-    """Send a message to an HTML element."""
-    obj_response.html_append("#%s" % container_id, "%s<br/>" % html.escape(msg))
-
-
 class ParamTable(Table):
     name = Col("Name")
     value = Col("Value")

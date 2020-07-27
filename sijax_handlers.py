@@ -146,16 +146,33 @@ class SijaxHandlers(Handlers):
                 routine.stop(obj_response)
         db.session.commit()
 
-    def run_routine(self, obj_response, file_id):
+    def pause_routine(self, obj_response, file_ids):
+        for file_id in file_ids:
+            routine = get_objects(Routine, file_id=file_id)[0]
+            if routine.running:
+                routine.pause(obj_response)
+
+    def run_routine(self, obj_response, file_id, routine_paused):
         routine = get_objects(Routine, file_id=file_id)[0]
-        p = routine.start()
-        db.session.commit()
-        p.wait()
-        if routine.running:
-            stdout, stderr = p.communicate()
-            routine.running = False
-            routine.report(obj_response, stdout)
-        db.session.commit()
+        if routine_paused:
+            routine.resume(obj_response)
+        else:
+            p = routine.start()
+            db.session.commit()
+            p.wait()
+            if routine.running:
+                stdout, stderr = p.communicate()
+                routine.running = False
+                routine.report(obj_response, stdout)
+            db.session.commit()
+
+    def set_log(self, obj_response, log_path):
+        if not os.path.isdir(os.path.split(log_path)[0]):
+            report_status(obj_response, "status", "'%s' is not a valid directory." % log_path)
+        else:
+            get_objects(Misc)[0].log_path = log_path
+            db.session.commit()
+            obj_response.html("#log-path", html.escape(log_path))
 
 class SijaxCometHandlers(Handlers):
 

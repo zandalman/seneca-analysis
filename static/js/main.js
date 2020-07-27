@@ -407,7 +407,8 @@ $("#run-routine").on("click", function() {
                 $(this).removeClass("error");
                 $(this).addClass("running");
                 $("#status").append("Running '" + $(this).text() + "'.<br>");
-                Sijax.request("run_routine", [this.id]);
+                var routine_paused = $(this).hasClass("paused");
+                Sijax.request("run_routine", [this.id, routine_paused]);
             }
         });
         update_routine_buttons();
@@ -435,35 +436,40 @@ $("#slider-status-size").slider({
     }
 });
 
-function adjust_routine_class(id, error) {
+function adjust_routine_class(id, cls) {
     var routine = $("#" + id);
-    routine.removeClass("running");
-    if (error) {
-        routine.addClass("error");
+    routine.removeClass("running error paused");
+    if (cls) {
+        routine.addClass(cls);
     }
     update_routine_buttons();
 }
 
 function update_routine_buttons() {
     var selected = $("#routine-list .ui-selected");
-    if (selected.length === 0) {
+    if (selected.length === 0) { // no routines selected
         $("#remove-routine").addClass("inactive");
         $("#toggle-select").removeClass("checked");
         $("#toggle-select").text("check_box_outline_blank");
-    } else {
+    } else { // some routines selected
         $("#remove-routine").removeClass("inactive");
         $("#toggle-select").addClass("checked");
         $("#toggle-select").text("check_box");
     }
-    if (selected.hasClass("running")) {
-        $("#stop-routine").removeClass("inactive"); // some selected routines running
-    } else {
-        $("#stop-routine").addClass("inactive"); // all selected routines not running
+    if (selected.hasClass("running")) { // some selected routines running
+        $("#pause-routine").removeClass("inactive");
+    } else { // all selected routines not running
+        $("#pause-routine").addClass("inactive");
     }
-    if (selected.not(".running").length > 0) {
-        $("#run-routine").removeClass("inactive"); // some selected routines not running
-    } else {
-        $("#run-routine").addClass("inactive"); // all selected routines running
+    if (selected.hasClass("running") || selected.hasClass("paused")) { // some selected routines running or paused
+        $("#stop-routine").removeClass("inactive");
+    } else { // all selected routines not running nor paused
+        $("#stop-routine").addClass("inactive");
+    }
+    if (selected.not(".running").length > 0) { // some selected routines not running
+        $("#run-routine").removeClass("inactive");
+    } else { // all selected routines running
+        $("#run-routine").addClass("inactive");
     }
 }
 
@@ -472,4 +478,19 @@ $(window).bind("beforeunload", function() {
         return this.id;
     }).get();
     Sijax.request("stop_routine", [all_files]);
+});
+
+$("#set-log").on("click", function () {
+    var log_path = prompt("Absolute path for logging", $("#log-path").text());
+    Sijax.request("set_log", [log_path]);
+});
+
+$("#pause-routine").on("click", function () {
+    if (!$(this).hasClass("inactive")) {
+        var selected_files = $("#routine-list .ui-selected").map(function() {
+            return this.id;
+        }).get();
+        Sijax.request("pause_routine", [selected_files]);
+        update_routine_buttons();
+    }
 });

@@ -214,3 +214,6 @@ p {
     margin-left: -2px;
     cursor: ns-resize;
 }
+.paused {
+    color: dodgerblue;
+}
