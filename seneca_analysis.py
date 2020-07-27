@@ -8,6 +8,7 @@ import inspect
 import os
 import numpy as np
 import time
+import datetime
 import sys
 
 
@@ -40,12 +41,14 @@ class Series(object):
         data (list): A list of series data.
         times (list): The time in seconds since initialization for each entry in data.
         start_time (float): The initialization time.
+        pending (bool): Some data has not yet been sent.
         num (int): The number of entries in the series data.
     """
     def __init__(self, name):
         self.name = name
         self.data = []
         self.times = []
+        self.pending = False
         self.start_time = time.time()
 
     def add(self, *args):
@@ -57,6 +60,7 @@ class Series(object):
         """
         self.data += args
         self.times += [time.time() - self.start_time] * len(args)
+        self.pending = True
 
     def time_plot(self, width=20, *args, **kwargs):
         """
@@ -85,6 +89,7 @@ class Analysis(object):
             Defaults to False.
         save (bool): Automatically save plots. Defaults to False.
         save_path (str): The path to save plots to. Defaults to the current working directory.
+        influx_db: An InfluxDB object.
 
     Attributes:
         interactive (bool): Whether the routine is being run from an interactive python session.
@@ -97,8 +102,9 @@ class Analysis(object):
         data_path (str): The path of the buffer file to write to.
         series (dict): A dictionary of Series objects associated with the analysis.
         num (int): The number of analysis iterations.
+        influx_db: An InfluxDB object.
     """
-    def __init__(self, interactive=False, save=False, save_path=os.getcwd()):
+    def __init__(self, interactive=False, save=False, save_path=os.getcwd(), influx_db=None):
         self.data = []
         self.interactive = interactive
         if interactive:
@@ -111,6 +117,7 @@ class Analysis(object):
         self.save_path = save_path
         self.series = {}
         self.num = 0
+        self.influx_db = influx_db
 
     def get_app_root_path(self):
         """
@@ -142,6 +149,11 @@ class Analysis(object):
         np.save(self.data_path, self.data, allow_pickle=True)
         self.data = []
         self.num += 1
+        if self.influx_db:
+            self.influx_db.send(self.series)
+        for ser in self.series:
+            ser.pending = False
+
 
     def message(self, msg):
         """
@@ -220,7 +232,7 @@ class Analysis(object):
             self.end()
             raise ValueError(msg)
 
-    def plot(self, name, description="", save_name=None, save=None, zfill=4):
+    def plot(self, name, description="", save_name=None, save=None):
         """
         Send the current matplotlib plot to the analysis app.
 
@@ -235,16 +247,15 @@ class Analysis(object):
             name (str): A name to associate with the plot in the analysis app.
             description (str): A description of the plot.
             save_name (str): The filename to use for saving the plot.
-                Defaults to the plot name and the iteration number.
+                Defaults to the plot name and the time.
             save (bool): Overrides the save argument in the analysis object.
-            zfill (int): Number of digits for the iteration number in the default save name.
         """
         if self.save and save is not False or save is True:
             if not save_name:
-                save_name = "%s-%s.png" % (name, str(self.num).zfill(zfill))
+                save_name = "%s-%s.png" % (name, datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S-%f"))
             full_save_path = os.path.join(self.save_path, save_name)
             plt.savefig(full_save_path)
-        plt.annotate("%s (%s)" % (name, self.filename), xy=(0, 0), xycoords='figure fraction')  # annotate plot with file name and plot name
+        plt.annotate("%s (%s)" % (name, self.filename), xy=(0, 0), xycoords="figure fraction")  # annotate plot with file name and plot name
         # encode the plot as a base64 string
         img = BytesIO()
         plt.savefig(img)
@@ -266,3 +277,24 @@ class Analysis(object):
         ser = Series(name)
         self.series[name] = ser
         return ser
+
+
+class InfluxDB(object):
+
+    def __init__(self, name, url, port, username, pwd, db, tags={}):
+        from influxdb import InfluxDBClient
+        self.name = name
+        self.client = InfluxDBClient(url, port, username, pwd, db)
+        self.tags = tags
+
+    def send(self, series):
+        res = self.make_json(series)
+        self.client.write_points([res])
+
+    def make_json(self, series):
+        now = str(datetime.datetime.utcnow())
+        fields = {}
+        for ser in series:
+            if ser.pending:
+                fields[ser.name] = ser.data[-1]
+        return {"measurement": self.name, "time": now, "fields": fields, "tags": self.tags}
