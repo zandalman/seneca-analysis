@@ -1,10 +1,9 @@
 
 // initialize global variables
 var paused = false; // whether analysis was just paused
-var timeElapsed = 0; // time elapsed on timer
 var timerID = -1;
+var timeElapsed = 0;
 var max_dims = [0.5 * $(document).width(), 0.5 * $(document).height()]; // maximum plot size
-var ctrl_pressed = false;
 
 $(document).ready(function () {
     $("#plots-container").sortable({
@@ -349,41 +348,10 @@ $("#toggle-select").on("click", function () {
     }
 });
 
-window.addEventListener("keyup", function (event) {
-    if (event.defaultPrevented) {
-        return;
-    }
-    switch (event.key) {
-        case "Meta":
-           ctrl_pressed = false;
-           break;
-        default:
-            return;
-    }
-});
-
 window.addEventListener("keydown", function (event) {
-    if (event.defaultPrevented) {
-        return;
-    }
-    switch (event.key) {
-        case "Escape": // unselect items
-            unselect();
-            event.preventDefault();
-            break;
-        case "4":
-            if (ctrl_pressed) {
-                $("#run-routine").trigger("click");
-                event.preventDefault();
-                break;
-            } else {
-                return;
-            }
-        case "Meta":
-            ctrl_pressed = true;
-            return;
-        default:
-            return;
+    if (event.key == "Escape") {
+        unselect();
+        event.preventDefault();
     }
 });
 
@@ -404,10 +372,12 @@ $("#run-routine").on("click", function() {
     if (!$(this).hasClass("inactive")) {
         $("#routine-list .ui-selected").each(function () {
             if (!$(this).hasClass("running")) {
+                var routine_paused = $(this).hasClass("paused");
                 $(this).removeClass("error");
                 $(this).addClass("running");
-                $("#status").append("Running '" + $(this).text() + "'.<br>");
-                var routine_paused = $(this).hasClass("paused");
+                if (!routine_paused) {
+                    $("#status").append("Running '" + $(this).text() + "'.<br>");
+                }
                 Sijax.request("run_routine", [this.id, routine_paused]);
             }
         });

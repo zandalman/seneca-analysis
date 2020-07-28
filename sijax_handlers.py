@@ -167,7 +167,9 @@ class SijaxHandlers(Handlers):
             db.session.commit()
 
     def set_log(self, obj_response, log_path):
-        if not os.path.isdir(os.path.split(log_path)[0]):
+        if not log_path:
+            pass
+        elif not os.path.isdir(os.path.split(log_path)[0]):
             report_status(obj_response, "status", "'%s' is not a valid directory." % log_path)
         else:
             get_objects(Misc)[0].log_path = log_path

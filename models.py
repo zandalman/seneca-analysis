@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-import os, html, subprocess, psutil
+import os, html, subprocess, psutil, datetime
 from plots import gen_id
 
 db = SQLAlchemy()
@@ -21,7 +21,7 @@ def report_status(obj_response, container_id, msg):
     log_path = get_objects(Misc)[0].log_path
     if log_path:
         with open(log_path, "a+") as f:
-            f.write(msg + "\n")
+            f.write("%s -- %s\n" % (datetime.datetime.utcnow().strftime("%m/%d/%Y %H:%M:%S.%f"), msg))
 
 
 def routine_names():
@@ -67,7 +67,6 @@ class Routine(db.Model):
 
     def resume(self, obj_response):
         self.process.resume()
-        obj_response.call("adjust_routine_class", [self.file_id, "running"])
         report_status(obj_response, "status", "'%s' resumed." % self.name)
 
     def start(self):

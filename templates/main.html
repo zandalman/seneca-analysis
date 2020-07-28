@@ -36,7 +36,10 @@
     </div><hr class="main">
     <div class="row">
         <i class="material-icons button" style="color:green;" id="start-analysis" title="start analysis">wifi_tethering</i>
-        <i class="material-icons button inactive" style="color:dodgerblue;" id="pause-analysis" title="pause analysis">pause</i>
+        <i class="material-icons" style="color:lightgray; position: relative;">
+            wifi_tethering
+            <i class="material-icons button inactive" style="color: dodgerblue; position: absolute; left: 0;" id="pause-analysis" title="pause analysis">pause</i>
+        </i>
         <i class="material-icons button inactive" style="color:red;" id="stop-analysis" title="stop analysis">portable_wifi_off</i>
         <p id="timer">00.00</p>
         <label for="slider" id="period-label">Period (s):</label>

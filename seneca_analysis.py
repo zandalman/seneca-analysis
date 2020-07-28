@@ -10,6 +10,7 @@ import numpy as np
 import time
 import datetime
 import sys
+import errno
 
 
 # set global variables
@@ -35,6 +36,7 @@ class Series(object):
 
     Args:
         name (str): A name to associate with the series.
+        influx (bool): Connect the series to the InfluxDB database. Defaults to False.
 
     Attributes:
         name (str): A name to associate with the series.
@@ -43,13 +45,15 @@ class Series(object):
         start_time (float): The initialization time.
         pending (bool): Some data has not yet been sent.
         num (int): The number of entries in the series data.
+        influx (bool): Connect the series to the InfluxDB database. Defaults to False.
     """
-    def __init__(self, name):
+    def __init__(self, name, influx=False):
         self.name = name
         self.data = []
         self.times = []
         self.pending = False
         self.start_time = time.time()
+        self.influx = influx
 
     def add(self, *args):
         """
@@ -151,7 +155,7 @@ class Analysis(object):
         self.num += 1
         if self.influx_db:
             self.influx_db.send(self.series)
-        for ser in self.series:
+        for ser in self.series.values():
             ser.pending = False
 
 
@@ -280,7 +284,21 @@ class Analysis(object):
 
 
 class InfluxDB(object):
+    """
+    InfluxDB database object.
 
+    Args:
+        name (str): A name to associate with this routine in the InfluxDB database.
+        url (str): Database server url.
+        port (str): Database port number
+        username (str): InfluxDB username.
+        pwd (str): InfluxDB password.
+        db (str): InfluxDB database name.
+        tags (dict): Tags to send to the InfluxDB database.
+
+    Attributes:
+        name (str):
+    """
     def __init__(self, name, url, port, username, pwd, db, tags={}):
         from influxdb import InfluxDBClient
         self.name = name
@@ -289,12 +307,16 @@ class InfluxDB(object):
 
     def send(self, series):
         res = self.make_json(series)
-        self.client.write_points([res])
+        try:
+            self.client.write_points([res])
+        except OSError as err:
+            if err.errno != errno.EEXIST:
+                raise OSError("Error uploading to the InfluxDB database. Check the database configuration.")
 
     def make_json(self, series):
         now = str(datetime.datetime.utcnow())
         fields = {}
         for ser in series:
-            if ser.pending:
+            if ser.pending and ser.influx:
                 fields[ser.name] = ser.data[-1]
         return {"measurement": self.name, "time": now, "fields": fields, "tags": self.tags}
