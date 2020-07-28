@@ -42,8 +42,6 @@ def create_app():
     @flask_sijax.route(app, '/')
     def main():
         """Generate the main page."""
-        with open(os.path.join(app.root_path, "analysis_on"), "w") as f:
-            f.write("False")
         # initialize the database
         log_path, routines_dict = init_db()
         db.session.commit()

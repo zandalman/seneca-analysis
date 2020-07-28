@@ -4,6 +4,7 @@ var paused = false; // whether analysis was just paused
 var timerID = -1;
 var timeElapsed = 0;
 var max_dims = [0.5 * $(document).width(), 0.5 * $(document).height()]; // maximum plot size
+var filter_options = ["RUNNING", "PAUSED", "!RUNNING", "ERROR"];
 
 $(document).ready(function () {
     $("#plots-container").sortable({
@@ -18,6 +19,12 @@ $(document).ready(function () {
         }, stop: function(event, ui) {
             update_routine_buttons();
         }
+    });
+    $("#filter").autocomplete({
+        source: filter_options
+    });
+    $("[title]").tooltip({
+        track: true
     });
 });
 
@@ -331,6 +338,10 @@ $("#remove-routine").on("click", function () {
     }
 });
 
+$("#routine-upload").on("change", function() {
+    this.form.submit();
+});
+
 function unselect() {
     $(".ui-selected").removeClass("ui-selected");
     update_routine_buttons();
@@ -352,20 +363,45 @@ window.addEventListener("keydown", function (event) {
     if (event.key == "Escape") {
         unselect();
         event.preventDefault();
+    } else if (event.key == "Shift") {
+        $("#routine-list").selectableScroll("disable");
+        $(".routine").addClass("shift-mode");
+    }
+});
+
+window.addEventListener("keyup", function (event) {
+    if (event.key == "Shift") {
+        $("#routine-list").selectableScroll("enable");
+        $(".routine").removeClass("shift-mode");
     }
 });
 
 
 $("#filter").on("keyup", function() {
-    unselect();
     var filter = $(this).val();
-    $(".routine").show();
-    $(".routine").each(function () {
-        var filename = $(this).text();
-        if (filename.indexOf(filter) === -1) {
-            $(this).hide();
-        }
-    });
+    var routines = $(".routine");
+    routines.removeClass("filtered");
+    if (filter === "RUNNING") {
+        routines.not(".running").addClass("filtered");
+        $(this).css("outline", "1px solid green");
+    } else if (filter === "PAUSED") {
+        routines.not(".paused").addClass("filtered");
+        $(this).css("outline", "1px solid dodgerblue");
+    } else if (filter === "ERROR") {
+        routines.not(".error").addClass("filtered");
+        $(this).css("outline", "1px solid red");
+    } else if (filter === "!RUNNING") {
+        routines.filter(".running").addClass("filtered");
+        $(this).css("outline", "1px solid black");
+    } else {
+        $(".routine").each(function () {
+            var filename = $(this).text();
+            if (filename.indexOf(filter) === -1) {
+                $(this).addClass("filtered");
+            }
+        });
+        $(this).css("outline", "none");
+    }
 });
 
 $("#run-routine").on("click", function() {
@@ -462,5 +498,29 @@ $("#pause-routine").on("click", function () {
         }).get();
         Sijax.request("pause_routine", [selected_files]);
         update_routine_buttons();
+    }
+});
+
+$("#routine-list").on("click", ".shift-mode", function () {
+    $(this).toggleClass("ui-selected");
+});
+
+$("#help").on("click", function () {
+    if (!$(this).hasClass("inactive")) {
+        $(this).addClass("inactive");
+        $("[title]").each(function (index) {
+            var tip = $(this);
+            setTimeout(function () {
+                tip.tooltip("open");
+                tip.css("border", "2px solid indianred");
+                setTimeout(function () {
+                    tip.tooltip("close");
+                    tip.css("border", "none");
+                }, 1500);
+            }, 1500 * index);
+        });
+        setTimeout(function () {
+            $("#help").removeClass("inactive");
+        }, $("[title]").length * 1500);
     }
 });

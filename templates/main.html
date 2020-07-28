@@ -5,10 +5,11 @@
 {% block title %}plot{% endblock %}
 {% block script1 %}<script>{{ form_init_js|safe }}</script>{% endblock %}
 {% block content %}
+    <i class="material-icons button" style="color:purple;" id="help" title="get tips for using the analysis app">help_outline</i>
     <h1>Analysis</h1><hr class="main">
     <p id="status"></p>
-    <i class="fa fa-eraser button" aria-hidden="true" id="erase"></i>
-    <div id="slider-status-size"></div>
+    <i class="fa fa-eraser button" aria-hidden="true" id="erase" title="clear status bar"></i>
+    <div id="slider-status-size" title="adjust status bar font size"></div>
     <p>Log path: <span id="log-path">{{ log_path }}</span></p>
     <hr class="main">
     <div class="row">
@@ -16,18 +17,18 @@
             <label for="routine-upload">
                 <i class="material-icons button" style="color:green;" id="add-routine" title="add routine">add_circle</i>
             </label>
-            <input type="file" name="routine" id="routine-upload" style="display: none;" onchange="form.submit();"/>
+            <input type="file" name="routine" id="routine-upload" style="display: none;"/>
         </form>
-        <i class="material-icons button inactive" style="color:red;" id="remove-routine" title="remove routine">remove_circle</i>
-        <i class="material-icons button" style="color:dodgerblue;" id="toggle-select" title="select">check_box_outline_blank</i>
-        <i class="material-icons button inactive" style="color:green;" id="run-routine" title="run routines">play_arrow</i>
-        <i class="material-icons button inactive" style="color:dodgerblue;" id="pause-routine" title="pause routine">pause</i>
-        <i class="material-icons button inactive" style="color:red;" id="stop-routine" title="stop routine">stop</i>
-        <i class="material-icons button" style="color:purple;" id="set-log" title="log path">history_edu</i>
+        <i class="material-icons button inactive" style="color:red;" id="remove-routine" title="remove selected routines">remove_circle</i>
+        <i class="material-icons button" style="color:dodgerblue;" id="toggle-select" title="toggle selected routines">check_box_outline_blank</i>
+        <i class="material-icons button inactive" style="color:green;" id="run-routine" title="run selected routines">play_arrow</i>
+        <i class="material-icons button inactive" style="color:dodgerblue;" id="pause-routine" title="pause selected routines">pause</i>
+        <i class="material-icons button inactive" style="color:red;" id="stop-routine" title="stop selected routines">stop</i>
+        <i class="material-icons button" style="color:purple;" id="set-log" title="set log path">history_edu</i>
     </div><hr>
     <div class="row">
         <label for="filter"><i class="material-icons">search</i></label>
-        <input type="text" id="filter">
+        <input type="text" id="filter" title="filter routines by name">
         <ul id="routine-list">
             {%- for id, filename in routines.items() %}
                 <li class="routine" id="{{ id }}">{{ filename }}</li>
@@ -42,10 +43,10 @@
         </i>
         <i class="material-icons button inactive" style="color:red;" id="stop-analysis" title="stop analysis">portable_wifi_off</i>
         <p id="timer">00.00</p>
-        <label for="slider" id="period-label">Period (s):</label>
-        <div id="slider">
+        <div id="slider" title="set analysis period">
             <div id="custom-handle" class="ui-slider-handle">
                 <input type="number" id="period" min="0.1" max="100"/>
+                <i class="material-icons">update</i>
             </div>
         </div>
     </div><hr>
@@ -59,7 +60,7 @@
                 <div id="plots-container"></div>
                 <div id="grid-options">
                     <i class="material-icons button" style="color:purple;" id="toggle-grid" title="toggle grid">grid_off</i>
-                    <div id="slider-grid"></div>
+                    <div id="slider-grid" title="adjust plot size"></div>
                 </div>
             </div>
         </div>

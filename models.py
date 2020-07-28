@@ -17,7 +17,8 @@ def get_objects(obj, count=False, **kwargs):
 
 def report_status(obj_response, container_id, msg):
     """Send a message to an HTML element."""
-    obj_response.html_append("#%s" % container_id, "%s<br/>" % html.escape(msg))
+    if obj_response is not None:
+        obj_response.html_append("#%s" % container_id, "%s<br/>" % html.escape(msg))
     log_path = get_objects(Misc)[0].log_path
     if log_path:
         with open(log_path, "a+") as f:
@@ -73,6 +74,7 @@ class Routine(db.Model):
         p = subprocess.Popen(["python", self.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         self.pid = p.pid
         self.running = True
+        report_status(None, "status", "Running '%s'." % self.name)
         return p
 
     @property

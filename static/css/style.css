@@ -103,8 +103,9 @@ p {
     text-align: center;
 }
 #custom-handle {
+    cursor: ew-resize;
     width: 4em;
-    height: 2.5em;
+    height: 3em;
     top: 50%;
     margin-top: -2em;
     text-align: center;
@@ -128,12 +129,6 @@ p {
   -webkit-appearance: none;
   margin: 0;
 }
-#period-label {
-    position: relative;
-    float: right;
-    right: 62%;
-    top: 1em;
-}
 #timer {
     margin: 0 auto;
     width: auto;
@@ -143,9 +138,6 @@ p {
     background-size: auto;
     font-size: 32px;
     display: inline-block;
-}
-#custom-handle {
-    cursor: ew-resize;
 }
 #toggle-grid {
     background: transparent;
@@ -201,6 +193,7 @@ p {
 }
 #filter {
     outline: none;
+    border: none;
 }
 #slider-status-size {
     position: absolute;
@@ -216,4 +209,12 @@ p {
 }
 .paused {
     color: dodgerblue;
+}
+.filtered:not(.ui-selected) {
+    display: none;
+}
+#help {
+    position: absolute;
+    top: 3%;
+    right: 3%;
 }
