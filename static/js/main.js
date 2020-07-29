@@ -376,12 +376,50 @@ $("#toggle-select").on("click", function () {
 
 // add keydown listeners
 window.addEventListener("keydown", function (event) {
-    if (event.key == "Escape") {
+    if (event.key === "Escape") {
         unselect();
         event.preventDefault();
-    } else if (event.key == "Shift") {
+    } else if (event.key === "Shift") {
         $("#routine-list").selectableScroll("disable");
         $(".routine").addClass("shift-mode");
+    } else if (event.key === "ArrowDown") {
+        var selected = $(".routine").not(":last").filter(".ui-selected");
+        var next = selected.next();
+        selected.removeClass("ui-selected");
+        next.addClass("ui-selected");
+        update_routine_buttons();
+        event.preventDefault();
+    } else if (event.key === "ArrowUp") {
+        var selected = $(".routine").not(":first").filter(".ui-selected");
+        var previous = selected.prev();
+        selected.removeClass("ui-selected");
+        previous.addClass("ui-selected");
+        update_routine_buttons();
+        event.preventDefault();
+    } else if (event.code === "KeyR") {
+        if (event.ctrlKey) {
+            if ($("#routine-list .ui-selected").length > 0) {
+                $("#run-routine").trigger("click");
+            } else {
+                $("#start-analysis").trigger("click");
+            }
+        }
+    } else if (event.code === "KeyP") {
+        if (event.ctrlKey) {
+            if ($("#routine-list .ui-selected").length > 0) {
+                $("#pause-routine").trigger("click");
+            } else {
+                $("#pause-analysis").trigger("click");
+            }
+        }
+    } else if (event.code === "KeyK") {
+        if (event.ctrlKey) {
+            if ($("#routine-list .ui-selected").length > 0) {
+                $("#stop-routine").trigger("click");
+            } else {
+                $("#stop-analysis").trigger("click");
+            }
+        }
     }
 });
 
