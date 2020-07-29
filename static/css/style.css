@@ -6,6 +6,9 @@
     font-family: ubuntu;
 }
 body {
+    overflow-x: hidden;
+}
+body {
     background-color: #eaeaea;
 }
 .button {
@@ -118,11 +121,12 @@ p {
 }
 #slider {
     display: inline-block;
-    width: 50%;
+    width: 70%;
     float: right;
     margin-right: 5%;
     position: relative;
     top: 1.5em;
+    background-image: linear-gradient(to right, #fea3aa, #f8b88b, #faf884, #baed91, #b2cefe, #f2a2e8);
 }
 #period::-webkit-outer-spin-button,
 #period::-webkit-inner-spin-button {
@@ -140,21 +144,18 @@ p {
     display: inline-block;
 }
 #toggle-grid {
-    background: transparent;
-    float: right;
     margin: 10px;
+    position: absolute;
+    left: 10%;
 }
 #grid-options {
     position: absolute;
     top: 10px;
     right: 10px;
-    width: 5%;
-    background: rgba(0, 0, 0, .3);
+    width: 50px;
+    background: palegoldenrod;
     padding-bottom: 80px;
-}
-#grid-size {
-    outline: none;
-    margin-bottom: 10px;
+    z-index: 10;
 }
 #slider-grid {
     margin: 0 auto;
@@ -217,4 +218,18 @@ p {
     position: absolute;
     top: 3%;
     right: 3%;
+}
+.period-tick {
+    border-left: 2px solid grey;
+    height: 14px;
+    position: absolute;
+    width: 100px;
+}
+.period-tick-label {
+    position: relative;
+    bottom: 20px;
+    left: -6px;
+}
+#fullscreen {
+    position: absolute;
 }

@@ -43,13 +43,13 @@
         </i>
         <i class="material-icons button inactive" style="color:red;" id="stop-analysis" title="stop analysis">portable_wifi_off</i>
         <p id="timer">00.00</p>
-        <div id="slider" title="set analysis period">
+        <div id="slider" title="set analysis period" position="relative">
             <div id="custom-handle" class="ui-slider-handle">
                 <input type="number" id="period" min="0.1" max="100"/>
                 <i class="material-icons">update</i>
             </div>
         </div>
-    </div><hr>
+    </div><hr style="margin-top: 20px;">
     <div class="row">
         <div class="column" style="width: 20%">
             <h2>Plots</h2><hr class="main">
@@ -57,9 +57,10 @@
         </div>
         <div class="column" style="width: 80%">
             <div id="plots-container-parent">
+                <i class="material-icons button" id="fullscreen" title="toggle full screen">fullscreen</i>
                 <div id="plots-container"></div>
                 <div id="grid-options">
-                    <i class="material-icons button" style="color:purple;" id="toggle-grid" title="toggle grid">grid_off</i>
+                    <i class="material-icons button" style="color:purple;" id="toggle-grid" title="toggle grid mode">grid_off</i>
                     <div id="slider-grid" title="adjust plot size"></div>
                 </div>
             </div>

@@ -1,16 +1,19 @@
 
 // initialize global variables
 var paused = false; // whether analysis was just paused
-var timerID = -1;
-var timeElapsed = 0;
+var timerID = -1; // timer state
+var timeElapsed = 0; // time elapsed on timer
 var max_dims = [0.5 * $(document).width(), 0.5 * $(document).height()]; // maximum plot size
-var filter_options = ["RUNNING", "PAUSED", "!RUNNING", "ERROR"];
+var filter_options = ["RUNNING", "PAUSED", "!RUNNING", "ERROR"]; // autocomplete options for filter
 
 $(document).ready(function () {
+    // initialize sortable grid mode
     $("#plots-container").sortable({
         containment: "#plots-container"
     });
+    // disable grid mode
     $("#plots-container").sortable("disable");
+    // initialize selectable routine list
     $("#routine-list").selectableScroll({
         scrollSnapX: 5,
         scrollAmount: 25,
@@ -20,12 +23,34 @@ $(document).ready(function () {
             update_routine_buttons();
         }
     });
+    // initialize filter autocomplete
     $("#filter").autocomplete({
         source: filter_options
     });
+    // initialize tooltips
     $("[title]").tooltip({
         track: true
     });
+    // create ticks on period slider
+    for (var x of Array(4).keys()) {
+        $("#slider").append(
+            "<div class='period-tick' style='left: " + x * 100 / 3 + "%'><span class='period-tick-label'>" + Math.pow(10, x - 1) + " s</span></div>"
+        );
+    }
+});
+
+// initialize period slider
+var handle = $("#custom-handle");
+$("#slider").slider({
+    min: -1,
+    max: 2,
+    step: 0.001,
+    create: function() {
+        handle.children().val(Math.pow(10, parseFloat($("#slider").slider("value"))).toPrecision(3));
+        },
+    slide: function(event, ui) {
+        handle.children().val(Math.pow(10, parseFloat(ui.value)).toPrecision(3));
+    }
 });
 
 // set the dimensions
@@ -35,7 +60,7 @@ function set_dims(width, height, selector) {
     selector.height(height * ratio);
 }
 
-// enable grid for a plot
+// enable grid mode for a plot
 function grid_on(selector) {
     selector.draggable("disable");
     selector.css("position", "initial");
@@ -43,7 +68,7 @@ function grid_on(selector) {
     selector.css("left", "initial");
 }
 
-// disable grid for a plot
+// disable grid mode for a plot
 function grid_off(selector) {
     selector.each(function () {
         var pos = $(this).position();
@@ -56,7 +81,6 @@ function grid_off(selector) {
 
 // initialize a plot
 function init_img(url, container) {
-
     var selector = $("#" + container);
     $("<img/>").attr("src", url).on("load", function () {
         set_dims(this.width / 2, this.height / 2, selector);
@@ -252,21 +276,7 @@ $("#plots-container").on("dblclick", ".plot-container, .table-container", functi
     $(this).parent().append($(this));
 });
 
-// period slider
-var handle = $("#custom-handle");
-$("#slider").slider({
-    min: -1,
-    max: 2,
-    step: 0.001,
-    create: function() {
-        handle.children().val(Math.pow(10, parseFloat($("#slider").slider("value"))).toPrecision(3));
-        },
-    slide: function(event, ui) {
-        handle.children().val(Math.pow(10, parseFloat(ui.value)).toPrecision(3));
-    }
-});
-
-// change slider value on handle change
+// change period slider value when slider is moved
 handle.children().on("change", function () {
     $("#slider").slider("value", Math.log10(parseFloat($(this).val())));
 });
@@ -327,6 +337,7 @@ $("#toggle-grid").on("click", function () {
     }
 });
 
+// remove routines
 $("#remove-routine").on("click", function () {
     if (!$(this).hasClass("inactive")) {
         var selected_files = $("#routine-list .ui-selected").map(function() {
@@ -338,15 +349,18 @@ $("#remove-routine").on("click", function () {
     }
 });
 
+// upload a routine
 $("#routine-upload").on("change", function() {
     this.form.submit();
 });
 
+// unselect all routines
 function unselect() {
     $(".ui-selected").removeClass("ui-selected");
     update_routine_buttons();
 }
 
+// toggle selected routines
 $("#toggle-select").on("click", function () {
     $(this).toggleClass("checked");
     if ($(this).hasClass("checked")) {
@@ -359,6 +373,7 @@ $("#toggle-select").on("click", function () {
     }
 });
 
+// add keydown listeners
 window.addEventListener("keydown", function (event) {
     if (event.key == "Escape") {
         unselect();
@@ -369,6 +384,7 @@ window.addEventListener("keydown", function (event) {
     }
 });
 
+// add keyup listeners
 window.addEventListener("keyup", function (event) {
     if (event.key == "Shift") {
         $("#routine-list").selectableScroll("enable");
@@ -376,7 +392,7 @@ window.addEventListener("keyup", function (event) {
     }
 });
 
-
+// adjust routines on routine filter change
 $("#filter").on("keyup", function() {
     var filter = $(this).val();
     var routines = $(".routine");
@@ -404,6 +420,7 @@ $("#filter").on("keyup", function() {
     }
 });
 
+// run routines
 $("#run-routine").on("click", function() {
     if (!$(this).hasClass("inactive")) {
         $("#routine-list .ui-selected").each(function () {
@@ -421,6 +438,7 @@ $("#run-routine").on("click", function() {
     }
 });
 
+// stop routines
 $("#stop-routine").on("click", function() {
     if (!$(this).hasClass("inactive")) {
         var selected_files = $("#routine-list .ui-selected").map(function() {
@@ -431,6 +449,7 @@ $("#stop-routine").on("click", function() {
     }
 });
 
+// initialize status bar font size slider
 $("#slider-status-size").slider({
     orientation: "vertical",
     min: 6,
@@ -442,6 +461,7 @@ $("#slider-status-size").slider({
     }
 });
 
+// adjust routine class
 function adjust_routine_class(id, cls) {
     var routine = $("#" + id);
     routine.removeClass("running error paused");
@@ -451,6 +471,7 @@ function adjust_routine_class(id, cls) {
     update_routine_buttons();
 }
 
+// activate and deactivate routine buttons based on selected routines
 function update_routine_buttons() {
     var selected = $("#routine-list .ui-selected");
     if (selected.length === 0) { // no routines selected
@@ -479,6 +500,7 @@ function update_routine_buttons() {
     }
 }
 
+// stop all routines before unload
 $(window).bind("beforeunload", function() {
     var all_files = $("#routine-list").children().map(function() {
         return this.id;
@@ -486,11 +508,13 @@ $(window).bind("beforeunload", function() {
     Sijax.request("stop_routine", [all_files]);
 });
 
+// set the log path
 $("#set-log").on("click", function () {
     var log_path = prompt("Absolute path for logging", $("#log-path").text());
     Sijax.request("set_log", [log_path]);
 });
 
+// pause routines
 $("#pause-routine").on("click", function () {
     if (!$(this).hasClass("inactive")) {
         var selected_files = $("#routine-list .ui-selected").map(function() {
@@ -501,10 +525,12 @@ $("#pause-routine").on("click", function () {
     }
 });
 
+// initialize shift mode
 $("#routine-list").on("click", ".shift-mode", function () {
     $(this).toggleClass("ui-selected");
 });
 
+// initialize help function
 $("#help").on("click", function () {
     if (!$(this).hasClass("inactive")) {
         $(this).addClass("inactive");
@@ -513,6 +539,7 @@ $("#help").on("click", function () {
             setTimeout(function () {
                 tip.tooltip("open");
                 tip.css("border", "2px solid indianred");
+                scroll_to(tip.attr("id"), 100);
                 setTimeout(function () {
                     tip.tooltip("close");
                     tip.css("border", "none");
@@ -521,6 +548,59 @@ $("#help").on("click", function () {
         });
         setTimeout(function () {
             $("#help").removeClass("inactive");
+            window.scroll({
+                top: 0,
+                behavior: "smooth"
+            });
+            document.documentElement.scrollTop = 0;
         }, $("[title]").length * 1500);
+    }
+});
+
+// scroll to an element by id
+function scroll_to(id, offset) {
+    var y = document.getElementById(id).getBoundingClientRect().top + window.scrollY - offset;
+    window.scroll({
+        top: y,
+        behavior: "smooth"
+    });
+}
+
+// toggle fullscreen
+$("#fullscreen").on("click", function () {
+    if (
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+    ) {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+            $(this).text("exit_fullscreen");
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+            $(this).text("exit_fullscreen");
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+            $(this).text("exit_fullscreen");
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+            $(this).text("exit_fullscreen");
+        }
+    } else {
+        element = $("#plots-container-parent").get(0);
+        if (element.requestFullscreen) {
+            element.requestFullscreen();
+            $(this).text("fullscreen");
+        } else if (element.mozRequestFullScreen) {
+            element.mozRequestFullScreen();
+            $(this).text("fullscreen");
+        } else if (element.webkitRequestFullscreen) {
+            element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+            $(this).text("fullscreen");
+        } else if (element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+            $(this).text("fullscreen");
+        }
     }
 });
