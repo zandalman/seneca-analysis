@@ -344,6 +344,7 @@ $("#remove-routine").on("click", function () {
             $(this).remove();
             return this.id;
         }).get();
+        Sijax.request("stop_routine", [selected_files]);
         Sijax.request("remove_routine", [selected_files]);
         update_routine_buttons();
     }
@@ -508,12 +509,6 @@ $(window).bind("beforeunload", function() {
     Sijax.request("stop_routine", [all_files]);
 });
 
-// set the log path
-$("#set-log").on("click", function () {
-    var log_path = prompt("Absolute path for logging", $("#log-path").text());
-    Sijax.request("set_log", [log_path]);
-});
-
 // pause routines
 $("#pause-routine").on("click", function () {
     if (!$(this).hasClass("inactive")) {
@@ -533,7 +528,7 @@ $("#routine-list").on("click", ".shift-mode", function () {
 // initialize help function
 $("#help").on("click", function () {
     if (!$(this).hasClass("inactive")) {
-        $(this).addClass("inactive");
+        $("#help, #set-log").addClass("inactive");
         $("[title]").each(function (index) {
             var tip = $(this);
             setTimeout(function () {
@@ -547,7 +542,7 @@ $("#help").on("click", function () {
             }, 1500 * index);
         });
         setTimeout(function () {
-            $("#help").removeClass("inactive");
+            $("#help, #set-log").removeClass("inactive");
             window.scroll({
                 top: 0,
                 behavior: "smooth"
@@ -576,31 +571,67 @@ $("#fullscreen").on("click", function () {
     ) {
         if (document.exitFullscreen) {
             document.exitFullscreen();
-            $(this).text("exit_fullscreen");
+            $(this).text("fullscreen");
         } else if (document.mozCancelFullScreen) {
             document.mozCancelFullScreen();
-            $(this).text("exit_fullscreen");
+            $(this).text("fullscreen");
         } else if (document.webkitExitFullscreen) {
             document.webkitExitFullscreen();
-            $(this).text("exit_fullscreen");
+            $(this).text("fullscreen");
         } else if (document.msExitFullscreen) {
             document.msExitFullscreen();
-            $(this).text("exit_fullscreen");
+            $(this).text("fullscreen");
         }
     } else {
         element = $("#plots-container-parent").get(0);
         if (element.requestFullscreen) {
             element.requestFullscreen();
-            $(this).text("fullscreen");
+            $(this).text("fullscreen_exit");
         } else if (element.mozRequestFullScreen) {
             element.mozRequestFullScreen();
-            $(this).text("fullscreen");
+            $(this).text("fullscreen_exit");
         } else if (element.webkitRequestFullscreen) {
             element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-            $(this).text("fullscreen");
+            $(this).text("fullscreen_exit");
         } else if (element.msRequestFullscreen) {
             element.msRequestFullscreen();
-            $(this).text("fullscreen");
+            $(this).text("fullscreen_exit");
         }
+    }
+});
+
+dialog = $("#dialog").dialog({
+    autoOpen: false,
+    width: "50%",
+    modal: true,
+    resizable: false,
+    open: function () {
+        $("#new-log-path").val($("#log-path").text());
+    },
+    buttons: [
+        {
+            text: "Set log path",
+            click: function () {
+                Sijax.request("set_log", [$("#new-log-path").val()]);
+                dialog.dialog("close");
+            }
+        },
+        {
+            text: "Cancel",
+            click: function () {
+                dialog.dialog("close");
+            }
+        },
+    ]
+});
+
+dialog.find("form").on("submit", function (e) {
+    e.preventDefault();
+})
+
+// set the log path
+$("#set-log").on("click", function () {
+    if (!$(this).hasClass("inactive")) {
+        dialog.dialog("open");
     }
 });

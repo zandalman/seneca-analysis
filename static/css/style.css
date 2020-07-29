@@ -150,8 +150,8 @@ p {
 }
 #grid-options {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 0;
+    right: 0;
     width: 50px;
     background: palegoldenrod;
     padding-bottom: 80px;
@@ -232,4 +232,73 @@ p {
 }
 #fullscreen {
     position: absolute;
+}
+#plots-container-parent {
+    width: 98%;
+    height: 2000px;
+    margin: 0 auto;
+    background: beige;
+    position: relative;
+}
+#plots-container {
+    width: 100%;
+    height: 100%;
+}
+.plot-container {
+    background-size: cover;
+}
+.table-container {
+    background-color: #eaeaea;
+}
+.plot-container, .table-container {
+    cursor: move;
+    border: 2px solid black;
+    float: left;
+    margin: 2px;
+}
+.plot-container.highlight, .table-container.highlight {
+    border: 2px solid indianred;
+}
+.plot-list-item, .plot-list-routine-title {
+    list-style-type: none;
+    word-wrap: break-word;
+    white-space: -moz-pre-wrap;
+    white-space: pre-wrap;
+    cursor: pointer;
+}
+.plot-list-item {
+    margin-left: 0;
+    padding-left: 10px;
+}
+.plot-list-routine-title {
+    padding-left: 0;
+    margin-left: -10px;
+}
+.plot-list-item.visible:before, .plot-list-routine-title.visible:before {
+    content: "\f06e";
+    font-family: FontAwesome;
+    margin-left: -20px;
+    font-size: 12px;
+    display: inline-block;
+    width: 20px;
+}
+.plot-list-item.invisible, .plot-list-routine-title.invisible {
+    opacity: .6;
+}
+.plot-list-item.invisible:before, .plot-list-routine-title.invisible:before {
+    content: "\f070";
+    font-family: FontAwesome;
+    margin-left: -20px;
+    font-size: 12px;
+    display: inline-block;
+    width: 20px;
+}
+#plot-list{
+    margin: 0;
+    padding: 0;
+    text-align: left;
+}
+#new-log-path {
+    width: 100%;
+    outline: none;
 }

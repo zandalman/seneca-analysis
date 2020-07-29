@@ -17,8 +17,8 @@
     <script type="text/javascript" src="{{ url_for('static', filename='js/sijax/sijax.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/sijax/sijax_comet.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/sijax/sijax_upload.js') }}"></script>
-    {% block script1 %}{% endblock %}
-    <title>{% block title %}{% endblock %}</title>
+    <script>{{ form_init_js|safe }}</script>
+    <title>Seneca Analysis</title>
     <script type="text/javascript">{{ g.sijax.get_js()|safe }}</script>
 </head>
 <body onload="remove_loader()">
@@ -26,7 +26,7 @@
         <div id="loader-img"></div>
     </div>
     {% block content %}{% endblock %}
-    {% block script2 %}{% endblock %}
+    <script src="../static/js/main.js"></script>
     <script>
         $("#erase").on("click", function(){
             $("#status").html("");

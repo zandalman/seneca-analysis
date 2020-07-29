@@ -1,9 +1,4 @@
 {% extends "base.html" %}
-{% block styles %}
-    <link href="../static/css/plot.css" rel="stylesheet" type="text/css">
-{% endblock %}
-{% block title %}plot{% endblock %}
-{% block script1 %}<script>{{ form_init_js|safe }}</script>{% endblock %}
 {% block content %}
     <i class="material-icons button" style="color:purple;" id="help" title="get tips for using the analysis app">help_outline</i>
     <h1>Analysis</h1><hr class="main">
@@ -13,6 +8,14 @@
     <p>Log path: <span id="log-path">{{ log_path }}</span></p>
     <hr class="main">
     <div class="row">
+        <div id="dialog" title="Set new log path">
+            <form>
+                <fieldset>
+                    <label for="new-log-path">Absolute path to log file: </label>
+                    <input type="text" name="new-log-path" id="new-log-path">
+                </fieldset>
+            </form>
+        </div>
         <form id="add-routine-form" name="add-routine" method="post" enctype="multipart/form-data">
             <label for="routine-upload">
                 <i class="material-icons button" style="color:green;" id="add-routine" title="add routine">add_circle</i>
@@ -66,7 +69,4 @@
             </div>
         </div>
     </div>
-{% endblock %}
-{% block script2 %}
-    <script src="../static/js/main.js"></script>
 {% endblock %}
