@@ -6,10 +6,8 @@
     font-family: ubuntu;
 }
 body {
-    overflow-x: hidden;
-}
-body {
     background-color: #eaeaea;
+    overflow-x: hidden;
 }
 .button {
     cursor: pointer;
@@ -232,6 +230,7 @@ p {
 }
 #fullscreen {
     position: absolute;
+    z-index: 10;
 }
 #plots-container-parent {
     width: 98%;
@@ -301,4 +300,31 @@ p {
 #new-log-path {
     width: 100%;
     outline: none;
+}
+code {
+    font-family: 'Source Code Pro', monospace;
+    background: #f4f4f4;
+    border: 1px solid #ddd;
+    border-left: 3px solid #f36d33;
+    color: #666;
+    page-break-inside: avoid;
+    margin-bottom: 1.6em;
+    overflow: auto;
+    padding: 1em 1.5em;
+    display: block;
+    word-wrap: break-word;
+}
+#help-dialog-container {
+    position: fixed;
+    z-index: 100;
+}
+.indent {
+    margin-left: 40px;
+}
+.step {
+    background: #f4f4f4;
+    margin-right: 20px;
+}
+.step:hover {
+    background: #ddd;
 }

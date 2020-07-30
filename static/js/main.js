@@ -31,12 +31,69 @@ $(document).ready(function () {
     $("[title]").tooltip({
         track: true
     });
+    // initialize tabs
+    $("#tabs").tabs();
     // create ticks on period slider
     for (var x of Array(4).keys()) {
         $("#slider").append(
             "<div class='period-tick' style='left: " + x * 100 / 3 + "%'><span class='period-tick-label'>" + Math.pow(10, x - 1) + " s</span></div>"
         );
     }
+    // add keydown listeners
+    window.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            unselect();
+            event.preventDefault();
+        } else if (event.key === "Shift") {
+            $("#routine-list").selectableScroll("disable");
+            $(".routine").addClass("shift-mode");
+        } else if (event.key === "ArrowDown") {
+            var selected = $(".routine").not(":last").filter(".ui-selected");
+            var next = selected.next();
+            selected.removeClass("ui-selected");
+            next.addClass("ui-selected");
+            update_routine_buttons();
+            event.preventDefault();
+        } else if (event.key === "ArrowUp") {
+            var selected = $(".routine").not(":first").filter(".ui-selected");
+            var previous = selected.prev();
+            selected.removeClass("ui-selected");
+            previous.addClass("ui-selected");
+            update_routine_buttons();
+            event.preventDefault();
+        } else if (event.code === "KeyR") {
+            if (event.ctrlKey) {
+                if ($("#routine-list .ui-selected").length > 0) {
+                    $("#run-routine").trigger("click");
+                } else {
+                    $("#start-analysis").trigger("click");
+                }
+            }
+        } else if (event.code === "KeyP") {
+            if (event.ctrlKey) {
+                if ($("#routine-list .ui-selected").length > 0) {
+                    $("#pause-routine").trigger("click");
+                } else {
+                    $("#pause-analysis").trigger("click");
+                }
+            }
+        } else if (event.code === "KeyK") {
+            if (event.ctrlKey) {
+                if ($("#routine-list .ui-selected").length > 0) {
+                    $("#stop-routine").trigger("click");
+                } else {
+                    $("#stop-analysis").trigger("click");
+                }
+            }
+        }
+    });
+    // add keyup listeners
+    window.addEventListener("keyup", function (event) {
+        if (event.key == "Shift") {
+            $("#routine-list").selectableScroll("enable");
+            $(".routine").removeClass("shift-mode");
+        }
+    });
 });
 
 // initialize period slider
@@ -374,63 +431,6 @@ $("#toggle-select").on("click", function () {
     }
 });
 
-// add keydown listeners
-window.addEventListener("keydown", function (event) {
-    if (event.key === "Escape") {
-        unselect();
-        event.preventDefault();
-    } else if (event.key === "Shift") {
-        $("#routine-list").selectableScroll("disable");
-        $(".routine").addClass("shift-mode");
-    } else if (event.key === "ArrowDown") {
-        var selected = $(".routine").not(":last").filter(".ui-selected");
-        var next = selected.next();
-        selected.removeClass("ui-selected");
-        next.addClass("ui-selected");
-        update_routine_buttons();
-        event.preventDefault();
-    } else if (event.key === "ArrowUp") {
-        var selected = $(".routine").not(":first").filter(".ui-selected");
-        var previous = selected.prev();
-        selected.removeClass("ui-selected");
-        previous.addClass("ui-selected");
-        update_routine_buttons();
-        event.preventDefault();
-    } else if (event.code === "KeyR") {
-        if (event.ctrlKey) {
-            if ($("#routine-list .ui-selected").length > 0) {
-                $("#run-routine").trigger("click");
-            } else {
-                $("#start-analysis").trigger("click");
-            }
-        }
-    } else if (event.code === "KeyP") {
-        if (event.ctrlKey) {
-            if ($("#routine-list .ui-selected").length > 0) {
-                $("#pause-routine").trigger("click");
-            } else {
-                $("#pause-analysis").trigger("click");
-            }
-        }
-    } else if (event.code === "KeyK") {
-        if (event.ctrlKey) {
-            if ($("#routine-list .ui-selected").length > 0) {
-                $("#stop-routine").trigger("click");
-            } else {
-                $("#stop-analysis").trigger("click");
-            }
-        }
-    }
-});
-
-// add keyup listeners
-window.addEventListener("keyup", function (event) {
-    if (event.key == "Shift") {
-        $("#routine-list").selectableScroll("enable");
-        $(".routine").removeClass("shift-mode");
-    }
-});
-
 // adjust routines on routine filter change
 $("#filter").on("keyup", function() {
     var filter = $(this).val();
@@ -565,29 +565,7 @@ $("#routine-list").on("click", ".shift-mode", function () {
 
 // initialize help function
 $("#help").on("click", function () {
-    if (!$(this).hasClass("inactive")) {
-        $("#help, #set-log").addClass("inactive");
-        $("[title]").each(function (index) {
-            var tip = $(this);
-            setTimeout(function () {
-                tip.tooltip("open");
-                tip.css("border", "2px solid indianred");
-                scroll_to(tip.attr("id"), 100);
-                setTimeout(function () {
-                    tip.tooltip("close");
-                    tip.css("border", "none");
-                }, 1500);
-            }, 1500 * index);
-        });
-        setTimeout(function () {
-            $("#help, #set-log").removeClass("inactive");
-            window.scroll({
-                top: 0,
-                behavior: "smooth"
-            });
-            document.documentElement.scrollTop = 0;
-        }, $("[title]").length * 1500);
-    }
+    $("#help-dialog").dialog("open");
 });
 
 // scroll to an element by id
@@ -641,10 +619,10 @@ $("#fullscreen").on("click", function () {
 dialog = $("#dialog").dialog({
     autoOpen: false,
     width: "50%",
-    modal: true,
     resizable: false,
     open: function () {
-        $("#new-log-path").val($("#log-path").text());
+        var log_path = $("#log-path").text() === "None" ? "" : $("#log-path").text()
+        $("#new-log-path").val(log_path);
     },
     buttons: [
         {
@@ -667,9 +645,55 @@ dialog.find("form").on("submit", function (e) {
     e.preventDefault();
 })
 
+$("#help-dialog").dialog({
+    autoOpen: false,
+    resizable: false,
+    appendTo: "#help-dialog-container",
+    width: 0.7 * $(document).width()
+});
+
 // set the log path
 $("#set-log").on("click", function () {
     if (!$(this).hasClass("inactive")) {
         dialog.dialog("open");
     }
 });
+
+$("#button-tour").on("click", function show_buttons() {
+    if (!$(this).hasClass("inactive")) {
+        $("#button-tour").addClass("inactive");
+        $(".tour-stop").each(function (index) {
+            var tip = $(this);
+            setTimeout(function () {
+                tip.tooltip("open");
+                tip.css("border", "2px solid indianred");
+                scroll_to(tip.attr("id"), 100);
+                setTimeout(function () {
+                    tip.tooltip("close");
+                    tip.css("border", "none");
+                }, 1500);
+            }, 1500 * index);
+        });
+        setTimeout(function () {
+            $("#button-tour").removeClass("inactive");
+            window.scroll({
+                top: 0,
+                behavior: "smooth"
+            });
+            document.documentElement.scrollTop = 0;
+        }, $(".tour-stop").length * 1500);
+    }
+});
+
+$(".step").hover(function () {
+    $("#" + $(this).data("step")).css({
+        "font-weight": "bold",
+        "color": "indianred"
+    });
+}, function () {
+    $("#" + $(this).data("step")).css({
+        "font-weight": "normal",
+        "color": "#666"
+    });
+});
+

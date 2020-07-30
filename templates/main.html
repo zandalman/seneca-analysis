@@ -1,37 +1,94 @@
 {% extends "base.html" %}
 {% block content %}
-    <i class="material-icons button" style="color:purple;" id="help" title="get tips for using the analysis app">help_outline</i>
+    <i class="material-icons button tour-stop" style="color:purple;" id="help" title="get tips for using the analysis app">help_outline</i>
+    <div id="help-dialog-container">
+        <div id="help-dialog" title="Seneca Analysis">
+            <div id="tabs">
+                <ul>
+                    <li><a href="#tabs-1">Introduction</a></li>
+                    <li><a href="#tabs-2">Creating Scripts</a></li>
+                    <li><a href="#tabs-3">Running Scripts</a></li>
+                </ul>
+                <li id="tabs-1">
+                    <p>The Seneca Analysis app allows you to visualize data in real time in the form of matplotlib plots, tables, and images.<p>
+                    <p>Click <button id="button-tour">here</button> for an overview of all buttons and sliders in the app.</p>
+                </li>
+                <li id="tabs-2">
+                    <div class="row">
+                        <div class="column" style="width: 50%">
+                            <p>To allow a python script to interact with the analysis app, use the following steps. Hover over each step to see where it appears in the sample script.</p>
+                            <ol>
+                                <li class="step" data-step="step1">Import the seneca analysis module.</li>
+                                <li class="step" data-step="step2">Set the app root path.</li>
+                                <li class="step" data-step="step3">Initialize an analysis object.</li>
+                                <li class="step" data-step="step4">Define plots, tables, and images.</li>
+                                <li class="step" data-step="step5">Send the data to the analysis app.</li>
+                                <li class="step" data-step="step6">End the analysis.</li>
+                            </ol>
+                        </div>
+                        <div class="column" style="width: 50%">
+                            Sample script
+                            <code>
+                                <span id="step1">import seneca_analysis</span><br/>
+                                import matplotlib.pyplot as plt<br/>
+                                import numpy as np<br/><br/>
+                                <span id="step2">seneca_analysis.app_root_path = "/PATH/TO/APP"</span><br/><br/>
+                                <span id="step3">analysis = seneca_analysis.Analysis()</span><br/>
+                                for i in range(100):<br/>
+                                <div class="indent">
+                                    x = np.random.random(5)<br/>
+                                    y = np.random.random(5)<br/>
+                                    plt.plot(x, y)<br/>
+                                    <span id="step4">analysis.plot("random points")</span><br/>
+                                    <span id="step5">analysis.send()</span><br/>
+                                </div>
+                                <span id="step6">analysis.end()</span><br/>
+                            </code>
+                        </div>
+                    </div>
+                </li>
+                <li id="tabs-3">
+                    <p>Scripts can be run from anywhere, even interactive Python sessions. However, running scripts from within the analysis app has advantages.</p>
+                    <ul>
+                        <li>Pause, resume, and kill scripts at will.</li>
+                        <li>Take actions on multiple scripts simultaneously.</li>
+                        <li>All script activities included in the log.</li>
+                    </ul>
+                </li>
+            </div>
+        </div>
+    </div>
     <h1>Analysis</h1><hr class="main">
     <p id="status"></p>
-    <i class="fa fa-eraser button" aria-hidden="true" id="erase" title="clear status bar"></i>
-    <div id="slider-status-size" title="adjust status bar font size"></div>
+    <i class="fa fa-eraser button tour-stop" aria-hidden="true" id="erase" title="clear status bar"></i>
+    <div class="tour-stop" id="slider-status-size" title="adjust status bar font size"></div>
     <p>Log path: <span id="log-path">{{ log_path }}</span></p>
     <hr class="main">
     <div class="row">
         <div id="dialog" title="Set new log path">
             <form>
                 <fieldset>
-                    <label for="new-log-path">Absolute path to log file: </label>
+                    <label for="new-log-path">Absolute path to log file (leave blank to stop logging): </label>
                     <input type="text" name="new-log-path" id="new-log-path">
                 </fieldset>
             </form>
         </div>
         <form id="add-routine-form" name="add-routine" method="post" enctype="multipart/form-data">
             <label for="routine-upload">
-                <i class="material-icons button" style="color:green;" id="add-routine" title="add routine">add_circle</i>
+                <i class="material-icons button tour-stop" style="color:green;" id="add-routine" title="add routine">add_circle</i>
             </label>
             <input type="file" name="routine" id="routine-upload" style="display: none;"/>
         </form>
-        <i class="material-icons button inactive" style="color:red;" id="remove-routine" title="remove selected routines">remove_circle</i>
-        <i class="material-icons button" style="color:dodgerblue;" id="toggle-select" title="toggle selected routines">check_box_outline_blank</i>
-        <i class="material-icons button inactive" style="color:green;" id="run-routine" title="run selected routines">play_arrow</i>
-        <i class="material-icons button inactive" style="color:dodgerblue;" id="pause-routine" title="pause selected routines">pause</i>
-        <i class="material-icons button inactive" style="color:red;" id="stop-routine" title="stop selected routines">stop</i>
-        <i class="material-icons button" style="color:purple;" id="set-log" title="set log path">history_edu</i>
+        <i class="material-icons button inactive tour-stop" style="color:red;" id="remove-routine" title="remove selected routines">remove_circle</i>
+        <i class="material-icons button tour-stop" style="color:dodgerblue;" id="toggle-select" title="toggle selected routines">check_box_outline_blank</i>
+        <i class="material-icons button inactive tour-stop" style="color:green;" id="run-routine" title="run selected routines">play_arrow</i>
+        <i class="material-icons button inactive tour-stop" style="color:dodgerblue;" id="pause-routine" title="pause selected routines">pause</i>
+        <i class="material-icons button inactive tour-stop" style="color:red;" id="stop-routine" title="stop selected routines">stop</i>
+        <i class="material-icons button tour-stop" style="color:purple;" id="set-log" title="set log path">history_edu</i>
     </div><hr>
     <div class="row">
         <label for="filter"><i class="material-icons">search</i></label>
-        <input type="text" id="filter" title="filter routines by name">
+        <input type="text" class="tour-stop" id="filter" title="filter routines by name">
         <ul id="routine-list">
             {%- for id, filename in routines.items() %}
                 <li class="routine" id="{{ id }}">{{ filename }}</li>
@@ -39,14 +96,14 @@
         </ul>
     </div><hr class="main">
     <div class="row">
-        <i class="material-icons button" style="color:green;" id="start-analysis" title="start analysis">wifi_tethering</i>
-        <i class="material-icons" style="color:lightgray; position: relative;">
+        <i class="material-icons button tour-stop" style="color:green;" id="start-analysis" title="start analysis">wifi_tethering</i>
+        <i class="material-icons tour-stop" style="color:lightgray; position: relative;">
             wifi_tethering
             <i class="material-icons button inactive" style="color: dodgerblue; position: absolute; left: 0;" id="pause-analysis" title="pause analysis">pause</i>
         </i>
-        <i class="material-icons button inactive" style="color:red;" id="stop-analysis" title="stop analysis">portable_wifi_off</i>
+        <i class="material-icons button inactive tour-stop" style="color:red;" id="stop-analysis" title="stop analysis">portable_wifi_off</i>
         <p id="timer">00.00</p>
-        <div id="slider" title="set analysis period" position="relative">
+        <div class="tour-stop" id="slider" title="set analysis period" position="relative">
             <div id="custom-handle" class="ui-slider-handle">
                 <input type="number" id="period" min="0.1" max="100"/>
                 <i class="material-icons">update</i>
@@ -60,11 +117,11 @@
         </div>
         <div class="column" style="width: 80%">
             <div id="plots-container-parent">
-                <i class="material-icons button" id="fullscreen" title="toggle full screen">fullscreen</i>
+                <i class="material-icons button tour-stop" id="fullscreen" title="toggle full screen">fullscreen</i>
                 <div id="plots-container"></div>
                 <div id="grid-options">
-                    <i class="material-icons button" style="color:purple;" id="toggle-grid" title="toggle grid mode">grid_off</i>
-                    <div id="slider-grid" title="adjust plot size"></div>
+                    <i class="material-icons button tour-stop" style="color:purple;" id="toggle-grid" title="toggle grid mode">grid_off</i>
+                    <div class="tour-stop" id="slider-grid" title="adjust plot size"></div>
                 </div>
             </div>
         </div>
