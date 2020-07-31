@@ -4,7 +4,7 @@ var paused = false; // whether analysis was just paused
 var timerID = -1; // timer state
 var timeElapsed = 0; // time elapsed on timer
 var max_dims = [0.5 * $(document).width(), 0.5 * $(document).height()]; // maximum plot size
-var filter_options = ["RUNNING", "PAUSED", "!RUNNING", "ERROR"]; // autocomplete options for filter
+var filter_options = ["RUNNING", "PAUSED", "ERROR", "!RUNNING", "!PAUSED", "!ERROR"]; // autocomplete options for filter
 
 $(document).ready(function () {
     // initialize sortable grid mode
@@ -447,7 +447,13 @@ $("#filter").on("keyup", function() {
         $(this).css("outline", "1px solid red");
     } else if (filter === "!RUNNING") {
         routines.filter(".running").addClass("filtered");
-        $(this).css("outline", "1px solid black");
+        $(this).css("outline", "1px dotted green");
+    } else if (filter === "!PAUSED") {
+        routines.filter(".paused").addClass("filtered");
+        $(this).css("outline", "1px dotted dodgerblue");
+    } else if (filter === "!ERROR") {
+        routines.filter(".error").addClass("filtered");
+        $(this).css("outline", "1px dotted red");
     } else {
         $(".routine").each(function () {
             var filename = $(this).text();
