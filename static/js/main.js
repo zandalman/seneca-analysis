@@ -661,6 +661,7 @@ $("#set-log").on("click", function () {
 
 $("#button-tour").on("click", function show_buttons() {
     if (!$(this).hasClass("inactive")) {
+        dialog.dialog("close");
         $("#button-tour").addClass("inactive");
         $(".tour-stop").each(function (index) {
             var tip = $(this);

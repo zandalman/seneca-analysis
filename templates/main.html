@@ -6,14 +6,20 @@
             <div id="tabs">
                 <ul>
                     <li><a href="#tabs-1">Introduction</a></li>
-                    <li><a href="#tabs-2">Creating Scripts</a></li>
-                    <li><a href="#tabs-3">Running Scripts</a></li>
+                    <li><a href="#tabs-2">Logging Activity</a></li>
+                    <li><a href="#tabs-3">Creating Scripts</a></li>
+                    <li><a href="#tabs-4">Running Scripts</a></li>
+                    <li><a href="#tabs-5">Doing Analysis</a></li>
                 </ul>
                 <li id="tabs-1">
                     <p>The Seneca Analysis app allows you to visualize data in real time in the form of matplotlib plots, tables, and images.<p>
                     <p>Click <button id="button-tour">here</button> for an overview of all buttons and sliders in the app.</p>
                 </li>
                 <li id="tabs-2">
+                    <p>All actions taken within the analysis app are logged on the black status bar. The status bar can be cleared using the <i class="fa fa-eraser" aria-hidden="true" style="color: pink;"></i> icon. The slider is used to adjust the font size.</p>
+                    <p>The <i class="material-icons" style="color:purple;">history_edu</i> icon is used to set the log file path. The log path does not need to be an existing file, as long as its directory exists. Once a log path is set, all messages in the status bar will also be appended to the log file with a timestamp.</p>
+                </li>
+                <li id="tabs-3">
                     <div class="row">
                         <div class="column" style="width: 50%">
                             <p>To allow a python script to interact with the analysis app, use the following steps. Hover over each step to see where it appears in the sample script.</p>
@@ -25,6 +31,7 @@
                                 <li class="step" data-step="step5">Send the data to the analysis app.</li>
                                 <li class="step" data-step="step6">End the analysis.</li>
                             </ol>
+                            <p>For more information about creating scripts, see the seneca_analysis documentation.</p>
                         </div>
                         <div class="column" style="width: 50%">
                             Sample script
@@ -47,13 +54,20 @@
                         </div>
                     </div>
                 </li>
-                <li id="tabs-3">
-                    <p>Scripts can be run from anywhere, even interactive Python sessions. However, running scripts from within the analysis app has advantages.</p>
+                <li id="tabs-4">
+                    <p>Scripts can be run from anywhere, even interactive Python sessions. However, running scripts from within the analysis app has some advantages.</p>
                     <ul>
                         <li>Pause, resume, and kill scripts at will.</li>
                         <li>Take actions on multiple scripts simultaneously.</li>
                         <li>All script activities included in the log.</li>
                     </ul>
+                    <p>Upload and remove scripts using the <i class="material-icons" style="color:green;">add_circle</i> and <i class="material-icons" style="color:red;">remove_circle</i> icons respectively. After adding a script, the script will appear in the routine list. Scripts can be selected by clicking and dragging. Holding shift will remove the dragging functionality and allow you to select multiple scripts by clicking. The <i class="material-icons" style="color:dodgerblue;">check_box</i> checkbox will select all scripts if none are selected and unselect all scripts otherwise. All script actions will occur on selected scripts only. Scripts can also be filtered by name by typing into the filter box labelled by the <i class="material-icons">search</i> icon.</p>
+                    <p>Scripts can be run, paused, and terminated using the <i class="material-icons" style="color:green;">play_arrow</i>, <i class="material-icons" style="color:dodgerblue;">pause</i>, and <i class="material-icons" style="color:red;">stop</i> icons respectively. Running scripts will turn green until they have completed or been terminated. Pausing a script sends a SIGSTOP signal to the process and causes the script to turn blue. If a script results in an error, the script turn red and the error will appear in the status bar. Typing <span style="color: green;">RUNNING</span>, <span style="color: dodgerblue;">PAUSED</span>, and <span style="color: red;">ERROR</span> will filter scripts by whether they are running, paused, and error scripts respectively. These can all be modified to "not" by using a "!" before the keyword.</p>
+                </li>
+                <li id="tabs-5">
+                    <p>The analysis display and the scripts are completely independent. Therefore, running scripts will not automatically appear in the analysis app. The analysis can be started, paused, and stopped using the <i class="material-icons" style="color:green;">wifi_tethering</i>, <i class="material-icons" style="color:lightgray; position: relative;">wifi_tethering<i class="material-icons" style="color: dodgerblue; position: absolute; left: 0;">pause</i></i>, and <i class="material-icons" style="color:red;">portable_wifi_off</i> icons respectively. When the analysis starts, the app reads the buffer files generated by the running scripts at a fixed period and displays the data in the app. The period can be adjusted by dragging the rainbow slider on typing in the slider handle. Note that the slider is on a logarithmic scale.</p>
+                    <p>When the app receives data from a new script, a notification will appear in the status bar. Then, the script and all associated data will appear in the plots list. The visibility of plots, tables, and images can be toggled with a click. When hovering over an item in the plots list, the associated plot's border will turn red.</p>
+                    <p>Visible plots can be moved around and resized within the beige container. All visible plots and images can be resized simultaneously using the slider on the right. The <i class="material-icons" style="color:purple;">grid_on</i> icon will toggle grid mode. In grid mode, plots will float left and not overlap, although they can still be resized and reordered. The plot container also has a fullscreen mode which can be toggled by the <i class="material-icons">fullscreen</i> icon.</p>
                 </li>
             </div>
         </div>
