@@ -2,7 +2,7 @@
 # import modules
 import numpy as np
 import time
-from werkzeug import secure_filename
+from werkzeug.utils import secure_filename
 from plots import *
 from models import *
 

@@ -203,7 +203,7 @@ class Analysis(object):
                 url = base64.b64encode(image_file.read()).decode()
             self.data.append(dict(type="image", file=self.filename, name=name, description=description, url=url))
         else:
-            msg = "'%s' is not a valid file path"
+            msg = "'%s' is not a valid file path" % path
             self.message(msg)
             self.end()
             raise FileNotFoundError(msg)
